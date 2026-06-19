@@ -3,6 +3,10 @@
 #include <iostream>
 #include <inttypes.h>
 #include <array>
+#include <csignal>
+#include <unistd.h>
+
+void signalHandler(int sig);
 
 /**
  * @brief Prints out the game
