@@ -8,22 +8,23 @@ void signalHandler(int sig) {
     _exit(sig);
 }
 
-void drawGame(const std::array<u_int64_t, 16> &board)
-{
-
-};
-
 void startScreen()
 {
     // 1. Enter the alternate screen buffer
     // 2. Move cursor to home (0,0) and clear the alternate screen
-    const char enter_alt[] = "\e[?1049h";
+    constexpr char enter_alt[] = "\e[?1049h\033[2J\033[H";
     write(STDOUT_FILENO, enter_alt, sizeof(enter_alt) - 1);
  
 }
 
 void endScreen()
 {
-    const char exit_alt[] = "\e[?1049l";
+    constexpr char exit_alt[] = "\e[?1049l";
     write(STDOUT_FILENO, exit_alt, sizeof(exit_alt) - 1);
+}
+
+
+void clearScreen()
+{
+    std::cout << "\033[3J\033[2J\033[H" << std::flush;
 }

@@ -19,28 +19,35 @@
 typedef enum 
 {
     //  White pieces
-    WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_QUEEN,
-    WHITE_KING, WHITE_BISHOP,
+    WHITE_KING, WHITE_QUEEN, WHITE_ROOKS, WHITE_BISHOPS,
+    WHITE_KNIGHTS, WHITE_PAWNS,
 
     //  Black pieces
-    BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_QUEEN,
-    BLACK_KING, BLACK_BISHOP
+    BLACK_KING, BLACK_QUEEN, BLACK_ROOKS, BLACK_BISHOPS,
+    BLACK_KNIGHTS, BLACK_PAWNS,
 
 } Pieces;
+
+constexpr const char* pieceGlyphs[12] = {
+    "\u2654", "\u2655", "\u2656", "\u2657", "\u2658", "\u2659",
+    "\u265A", "\u265B", "\u265C", "\u265D", "\u265E", "\u265F"
+};
 
 class Game
 {
     public:
         Game();
         ~Game();
-        std::string updateGame(const std::string& move);
-        std::string getGame();
-
+        void updateGame(const std::string& move);
+        void printGame();
     private:
-        static int games;
         std::array<uint64_t,12> board;
         uint64_t white_pieces;
         uint64_t black_pieces;
         uint64_t all_pieces;
         bool white_turn;
+        bool game_over;
+        const uint64_t& getWhitePieces() const;
+        const uint64_t& getBlackPieces() const;
+        const uint64_t& getAllPieces() const;
 };

@@ -2,21 +2,18 @@
 #include <string>
 #include "objects.h"
 #include "screen.h"
-#include "logic.h"
 
 int main() {
     // This will now successfully register because screen.h is included above it
     signal(SIGINT, signalHandler); 
-    
     startScreen();
-    
-    while (1)
-    {
-        // Your CPU sleep loop works perfectly here
-        usleep(100000);
-    }
-    
-    //gameLoop();
+    std::cout << "frame one\n...board...\n";
+    std::cin.get();                       // look
+
+    std::cout << "\033[2J\033[H";         // clear + home — THIS is your repaint
+    std::cout << "frame two\n...board...\n";
+    std::cin.get(); 
+
     endScreen();
 
     return 0;
