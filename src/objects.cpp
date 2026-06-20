@@ -30,25 +30,52 @@ void Game::updateGame(const std::string& move)
 
 void Game::printGame()
 {
+    for (int y = 7; y >= 0; --y)
+    {
+        std::cout << ' '<< (y+1) << ' ';
+        for (int x = 0; x < 8; ++x)
+        {
+            int index = (8*y) + x;
+            bool isLight = ((x + y) % 2) != 0;
+            std::cout << (isLight ? BG_LIGHT : BG_DARK);
+
+            std::cout << RESET;
+        }
+        std::cout << "\n";
+    } 
+    std::cout << "    a  b  c  d  e  f  g  h\n";
+}
+
+const int Game::getPiece(int& index) const
+{
+    uint64_t binary_location = 1ULL << index;
+
+    bool occupied =  (binary_location & getAllPieces()) != 0;
+
+    if (!occupied)
+    {
+        return -1;
+    }
     
+    return -1; // <-remove this 
 }
 
 
-const uint64_t& Game::getWhitePieces() const
+const uint64_t Game::getWhitePieces() const
 {
-    return board[WHITE_PAWNS] || board[WHITE_BISHOPS] ||
-           board[WHITE_ROOKS] || board[WHITE_KNIGHTS] ||
-           board[WHITE_QUEEN] || board[WHITE_KING];
+    return board[WHITE_PAWNS] | board[WHITE_BISHOPS] |
+           board[WHITE_ROOKS] | board[WHITE_KNIGHTS] |
+           board[WHITE_QUEEN] | board[WHITE_KING];
 }
-const uint64_t& Game::getBlackPieces() const
+const uint64_t Game::getBlackPieces() const
 {
-    return board[BLACK_PAWNS] || board[BLACK_BISHOPS] ||
-           board[BLACK_ROOKS] || board[BLACK_KNIGHTS] ||
-           board[BLACK_QUEEN] || board[BLACK_KING];
+    return board[BLACK_PAWNS] | board[BLACK_BISHOPS] |
+           board[BLACK_ROOKS] | board[BLACK_KNIGHTS] |
+           board[BLACK_QUEEN] | board[BLACK_KING];
 }
-const uint64_t& Game::getAllPieces() const
+const uint64_t Game::getAllPieces() const
 {
-    return getWhitePieces() || getBlackPieces();
+    return getWhitePieces() | getBlackPieces();
 }
 
 /*

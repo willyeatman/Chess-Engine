@@ -14,7 +14,9 @@
 
 #include <inttypes.h>
 #include <array>
+#include <iostream>
 #include <string>
+#include <cmath>
 
 typedef enum 
 {
@@ -28,10 +30,17 @@ typedef enum
 
 } Pieces;
 
-constexpr const char* pieceGlyphs[12] = {
-    "\u2654", "\u2655", "\u2656", "\u2657", "\u2658", "\u2659",
-    "\u265A", "\u265B", "\u265C", "\u265D", "\u265E", "\u265F"
+constexpr const char* glyph[12] = {
+    "\u265A","\u265B","\u265C","\u265D","\u265E","\u265F",  // white K Q R B N P
+    "\u265A","\u265B","\u265C","\u265D","\u265E","\u265F"   // black K Q R B N P
 };
+
+constexpr auto BG_LIGHT = "\033[48;5;180m";  // tan
+constexpr auto BG_DARK  = "\033[48;5;94m";   // brown
+constexpr auto FG_WHITE = "\033[38;5;255m";  // bright
+constexpr auto FG_BLACK = "\033[38;5;232m";  // near-black
+constexpr auto RESET    = "\033[0m";
+
 
 class Game
 {
@@ -47,7 +56,8 @@ class Game
         uint64_t all_pieces;
         bool white_turn;
         bool game_over;
-        const uint64_t& getWhitePieces() const;
-        const uint64_t& getBlackPieces() const;
-        const uint64_t& getAllPieces() const;
+        const uint64_t getWhitePieces() const;
+        const uint64_t getBlackPieces() const;
+        const uint64_t getAllPieces() const;
+        const int getPiece(int& index) const;
 };
