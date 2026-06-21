@@ -28,9 +28,11 @@ typedef enum
     BLACK_KING, BLACK_QUEEN, BLACK_ROOKS, BLACK_BISHOPS,
     BLACK_KNIGHTS, BLACK_PAWNS,
 
+    PIECE_COUNT
+
 } Pieces;
 
-constexpr const char* glyph[12] = {
+constexpr const char* unicode_pieces[12] = {
     "\u265A","\u265B","\u265C","\u265D","\u265E","\u265F",  // white K Q R B N P
     "\u265A","\u265B","\u265C","\u265D","\u265E","\u265F"   // black K Q R B N P
 };
@@ -59,5 +61,6 @@ class Game
         const uint64_t getWhitePieces() const;
         const uint64_t getBlackPieces() const;
         const uint64_t getAllPieces() const;
-        const int getPiece(int& index) const;
+        int getPiece(int index) const;
+        void printPiece(int index) const;
 };

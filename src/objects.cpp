@@ -38,7 +38,7 @@ void Game::printGame()
             int index = (8*y) + x;
             bool isLight = ((x + y) % 2) != 0;
             std::cout << (isLight ? BG_LIGHT : BG_DARK);
-
+            printPiece(index);
             std::cout << RESET;
         }
         std::cout << "\n";
@@ -46,18 +46,22 @@ void Game::printGame()
     std::cout << "    a  b  c  d  e  f  g  h\n";
 }
 
-const int Game::getPiece(int& index) const
+int Game::getPiece(int index) const
 {
     uint64_t binary_location = 1ULL << index;
 
     bool occupied =  (binary_location & getAllPieces()) != 0;
-
     if (!occupied)
     {
         return -1;
     }
+    for (int piece = WHITE_KING; piece < PIECE_COUNT; piece++)
+    {
+        if ((binary_location & board[piece]) != 0) return piece;
+    }
     
-    return -1; // <-remove this 
+    std::cerr << " This shouldnt Happen, You have problem if this prints" << std::endl;
+    return -1;
 }
 
 
@@ -87,3 +91,16 @@ const uint64_t Game::getAllPieces() const
         bool white_turn;
         bool game_over = false;
 */
+
+void Game::printPiece(int index) const
+{
+    int piece = getPiece(index);
+
+    if (piece == -1) 
+    {
+        std::cout << "   ";
+        return;
+    }
+
+    std::cout << " "<< unicode_pieces[piece] << " ";
+}
