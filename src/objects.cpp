@@ -23,27 +23,98 @@ Game::Game()
 }
 Game::~Game(){};
 
-void Game::updateGame(const std::string& move)
+void Game::runGame()
 {
+    while (!game_over)
+    {
+        printGame();
+        int piece = 0;
+        int destination = 0;
+        std::string p, d;
+        bool inputValid = false;
 
+        while (!inputValid)
+        {
+
+            std::cin >> p >> d;
+            
+
+            for (int i = 0; i < 2; i++)
+            {
+                p[i] = toupper(p[i]);
+                d[i] = toupper(d[i]);
+            }
+            try
+            {
+                piece = square_map.at(p);
+                destination = square_map.at(d);
+                inputValid = true;
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << "Invalid Move" << '\n';
+            }
+        }
+        
+        updateGame(piece, destination);
+    }
+}
+
+void Game::updateGame(const int p, const int d)
+{
+    uint64_t destination = 1Ull << d;
+    uint64_t peice = 1Ull << p;
+
+    if (!(destination & getAllPieces()))
+    {
+        for (int i = WHITE_KING; i < PIECE_COUNT; i++)
+        {
+            if (peice & board[i])
+            {
+                board[i] ^= peice;
+                board[i] |= destination;
+                break;
+            }
+        }
+    }
 }
 
 void Game::printGame()
 {
-    for (int y = 7; y >= 0; --y)
+    if(white_turn)
     {
-        std::cout << ' '<< (y+1) << ' ';
-        for (int x = 0; x < 8; ++x)
+        for (int y = 7; y >= 0; --y)
         {
-            int index = (8*y) + x;
-            bool isLight = ((x + y) % 2) != 0;
-            std::cout << (isLight ? BG_LIGHT : BG_DARK);
-            printPiece(index);
-            std::cout << RESET;
-        }
-        std::cout << "\n";
-    } 
-    std::cout << "    a  b  c  d  e  f  g  h\n";
+            std::cout << ' '<< (y+1) << ' ';
+            for (int x = 0; x < 8; ++x)
+            {
+                int index = (8*y) + x;
+                bool isLight = ((x + y) % 2) != 0;
+                std::cout << (isLight ? BG_LIGHT : BG_DARK);
+                printPiece(index);
+            }
+            std::cout << "\n";
+        } 
+        std::cout << "    a  b  c  d  e  f  g  h\n";
+    }
+    else
+    {
+        for (int y = 0; y <= 7; ++y)
+        {
+            std::cout << ' '<< (y+1) << ' ';
+            for (int x = 7; x >= 0; --x)
+            {
+                int index = (8*y) + x;
+                bool isLight = ((x + y) % 2) != 0;
+                std::cout << (isLight ? BG_LIGHT : BG_DARK);
+                printPiece(index);
+            }
+            std::cout << "\n";
+        } 
+        std::cout << "    h  g  f  e  d  c  b  a\n";
+    }
+
+
 }
 
 int Game::getPiece(int index) const
@@ -99,8 +170,12 @@ void Game::printPiece(int index) const
     if (piece == -1) 
     {
         std::cout << "   ";
+        std::cout << RESET;
         return;
     }
-
-    std::cout << " "<< unicode_pieces[piece] << " ";
+    bool light = piece < 6;
+    std::cout << (light ? FG_WHITE : FG_BLACK);
+    std::cout << " " << piece_chars[piece] << " ";
+    std::cout << RESET;
 }
+

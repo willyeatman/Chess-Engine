@@ -7,12 +7,9 @@ int main() {
     // This will now successfully register because screen.h is included above it
     signal(SIGINT, signalHandler); 
     Game game;
-    //startScreen();
-    
-    game.printGame();
-
-
-    //endScreen();
+    startScreen();
+    game.runGame();
+    endScreen();
 
     return 0;
 }
