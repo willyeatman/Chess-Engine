@@ -1,2 +1,3 @@
 // Ignoring object files
 *.o
+outputs/game
