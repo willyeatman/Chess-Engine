@@ -191,7 +191,7 @@ void Game::getPawnMoves(std::vector<uint16_t> m, bool isWhite)
     while (pawns)
     {
         int from = __builtin_ctzll(pawns);
-        uint64_t attacks = knightAttacks[from] & ~otherPieces;
+        uint64_t attacks = pawnAttacks[isWhite][from] & ~otherPieces;
         
         while (attacks)
         {
@@ -200,6 +200,46 @@ void Game::getPawnMoves(std::vector<uint16_t> m, bool isWhite)
             attacks &= attacks - 1;                // clear that destination bit
         }
         pawns &= pawns - 1; 
+    }
+}
+
+void Game::getKingMoves(std::vector<uint16_t> m, bool isWhite)
+{
+    uint64_t king = isWhite ? board[WHITE_KING] : board[BLACK_KING];
+    uint64_t otherPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    while (king)
+    {
+        int from = __builtin_ctzll(king);
+        uint64_t attacks = kingAttacks[from] & ~otherPieces;
+        
+        while (attacks)
+        {
+            int to = __builtin_ctzll(attacks);
+            moves.push_back(Move{from, to, 0});
+            attacks &= attacks - 1;                // clear that destination bit
+        }
+        king &= king - 1; 
+    }
+}
+
+void Game::getKnightMoves(std::vector<uint16_t> m, bool isWhite)
+{
+    uint64_t knights = isWhite ? board[WHITE_KNIGHTS] : board[BLACK_KNIGHTS];
+    uint64_t otherPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    while (knights)
+    {
+        int from = __builtin_ctzll(knights);
+        uint64_t attacks = knightAttacks[from] & ~otherPieces;
+        
+        while (attacks)
+        {
+            int to = __builtin_ctzll(attacks);
+            moves.push_back(Move{from, to, 0});
+            attacks &= attacks - 1;                // clear that destination bit
+        }
+        knights &= knights - 1; 
     }
 }
 
