@@ -72,6 +72,25 @@ constexpr auto FG_BLACK = "\033[38;2;0;0;0m";        // black piece
 constexpr auto RESET    = "\033[0m";
 constexpr auto FG_RESET = "\033[39m";
 
+constexpr uint64_t RANK_1 = 0x00000000000000FFULL;   // squares 0–7
+constexpr uint64_t RANK_2 = 0x000000000000FF00ULL;   // squares 8–15
+constexpr uint64_t RANK_3 = 0x0000000000FF0000ULL;   // squares 16–23
+constexpr uint64_t RANK_4 = 0x00000000FF000000ULL;   // squares 24–31
+constexpr uint64_t RANK_5 = 0x000000FF00000000ULL;   // squares 32–39
+constexpr uint64_t RANK_6 = 0x0000FF0000000000ULL;   // squares 40–47
+constexpr uint64_t RANK_7 = 0x00FF000000000000ULL;   // squares 48–55
+constexpr uint64_t RANK_8 = 0xFF00000000000000ULL;   // squares 56–63
+
+
+constexpr uint64_t FILE_A = 0x0101010101010101ULL; 
+constexpr uint64_t FILE_B = 0x0202020202020202ULL;
+constexpr uint64_t FILE_C = 0x0404040404040404ULL;
+constexpr uint64_t FILE_D = 0x0808080808080808ULL;
+constexpr uint64_t FILE_E = 0x1010101010101010ULL;
+constexpr uint64_t FILE_F = 0x2020202020202020ULL;
+constexpr uint64_t FILE_G = 0x4040404040404040ULL;
+constexpr uint64_t FILE_H = 0x8080808080808080ULL;
+
 
 struct Move
 {
@@ -111,13 +130,13 @@ class Game
         const uint64_t getAllPieces() const;
         int getPiece(int index) const;
         void printPiece(int index) const;
-        void getPawnMoves(std::vector<uint16_t> moves, bool isWhite);
-        void getKingMoves(std::vector<uint16_t> moves, bool isWhite);
-        void getQueenMoves(std::vector<uint16_t> moves, bool isWhite);
-        void getRookoves(std::vector<uint16_t> moves, bool isWhite);
-        void getBishopMoves(std::vector<uint16_t> moves, bool isWhite);
-        void getKnightMoves(std::vector<uint16_t> moves, bool isWhite);
-        void getMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getPawnMoves(std::vector<Move>& m, bool isWhite);
+        void getKingMoves(std::vector<Move>& m, bool isWhite);
+        void getQueenMoves(std::vector<Move>& m, bool isWhite);
+        void getRookMoves(std::vector<Move>& m, bool isWhite);
+        void getBishopMoves(std::vector<Move>& m, bool isWhite);
+        void getKnightMoves(std::vector<Move>& m, bool isWhite);
+        void getMoves(std::vector<Move>& m, bool isWhite);
         void setupKnightLookup();
         void setupKingLookup();
         void setupPawnLookups();
