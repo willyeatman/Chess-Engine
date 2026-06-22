@@ -9,7 +9,6 @@
  * 
  */
 
-
 #pragma once
 
 #include <inttypes.h>
@@ -17,7 +16,9 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include "screen.h"
 #include <unordered_map>
+#include <vector>
 
 typedef enum 
 {
@@ -72,6 +73,23 @@ constexpr auto RESET    = "\033[0m";
 constexpr auto FG_RESET = "\033[39m";
 
 
+struct Move
+{
+    int from;
+    int to;
+    int type;
+
+};
+
+typedef enum 
+{
+    DEFAULT,
+    CAPTURE,
+    EN_PASSANT
+
+} MoveType;
+
+
 class Game
 {
     public:
@@ -82,6 +100,7 @@ class Game
         void runGame();
     private:
         std::array<uint64_t,12> board;
+        std::vector<Move> moves;
         uint64_t white_pieces;
         uint64_t black_pieces;
         uint64_t all_pieces;
@@ -92,4 +111,18 @@ class Game
         const uint64_t getAllPieces() const;
         int getPiece(int index) const;
         void printPiece(int index) const;
+        void getPawnMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getKingMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getQueenMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getRookoves(std::vector<uint16_t> moves, bool isWhite);
+        void getBishopMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getKnightMoves(std::vector<uint16_t> moves, bool isWhite);
+        void getMoves(std::vector<uint16_t> moves, bool isWhite);
+        void setupKnightLookup();
+        void setupKingLookup();
+        void setupPawnLookups();
+        void setupLookups();
+        uint64_t knightAttacks[64];
+        uint64_t pawnAttacks[2][64]; // zero for black, one for white
+        uint64_t kingAttacks[64];
 };

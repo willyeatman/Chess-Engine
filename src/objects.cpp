@@ -25,8 +25,12 @@ Game::~Game(){};
 
 void Game::runGame()
 {
+
+    setupLookups();
+
     while (!game_over)
     {
+        clearScreen();
         printGame();
         int piece = 0;
         int destination = 0;
@@ -55,7 +59,7 @@ void Game::runGame()
                 std::cerr << "Invalid Move" << '\n';
             }
         }
-        
+
         updateGame(piece, destination);
     }
 }
@@ -179,3 +183,132 @@ void Game::printPiece(int index) const
     std::cout << RESET;
 }
 
+void Game::getPawnMoves(std::vector<uint16_t> m, bool isWhite)
+{
+    uint64_t pawns = isWhite ? board[WHITE_PAWNS] : board[BLACK_PAWNS];
+    uint64_t otherPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    while (pawns)
+    {
+        int from = __builtin_ctzll(pawns);
+        uint64_t attacks = knightAttacks[from] & ~otherPieces;
+        
+        while (attacks)
+        {
+            int to = __builtin_ctzll(attacks);
+            moves.push_back(Move{from, to, 0});
+            attacks &= attacks - 1;                // clear that destination bit
+        }
+        pawns &= pawns - 1; 
+    }
+}
+
+void Game::setupKnightLookup()
+{
+    const int dx[] = {-1, -1, -2, -2, 2, 2, 1, 1};
+    const int dy[] = {-2, 2, 1, -1, 1, -1, 2, -2};
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+        int y = sq % 8;
+        int x = sq / 8;
+        uint64_t attacks = 0;
+
+        for (int m = 0; m < 8; m++)
+        {
+            int nx = x + dx[m];
+            int ny = y + dy[m];
+
+            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            {
+                int index = nx + (ny*8);
+                attacks |= (1ULL << index);
+            }
+
+        }
+        knightAttacks[sq] = attacks;
+    }
+}
+void Game::setupKingLookup()
+{
+    const int dx[] = {0, 0, 1, 1, 1, -1, -1, -1};
+    const int dy[] = {-1, 1, 1, -1, 0, 1, -1, 0};
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+        int y = sq % 8;
+        int x = sq / 8;
+        uint64_t attacks = 0;
+
+        for (int m = 0; m < 8; m++)
+        {
+            int nx = x + dx[m];
+            int ny = y + dy[m];
+
+            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            {
+                int index = nx + (ny*8);
+                attacks |= (1ULL << index);
+            }
+
+        }
+        knightAttacks[sq] = attacks;
+    }
+}
+void Game::setupPawnLookups()
+{
+    const int dx_b[] = {1, -1};
+    const int dy_b[] = {-1, -1}; 
+
+    const int dx_w[] = {1, -1};
+    const int dy_w[] = {1, 1}; 
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+
+        int y = sq % 8;
+        int x = sq / 8;
+        uint64_t attacks = 0;
+
+        for (int m = 0; m < 2; m++)
+        {
+            int nx = x + dx_b[m];
+            int ny = y + dy_b[m];
+
+            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            {
+                int index = nx + (ny*8);
+                attacks |= (1ULL << index);
+            }
+
+        }
+        pawnAttacks[0][sq] = attacks;
+    }
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+        int y = sq % 8;
+        int x = sq / 8;
+        uint64_t attacks = 0;
+
+        for (int m = 0; m < 2; m++)
+        {
+            int nx = x + dx_w[m];
+            int ny = y + dy_w[m];
+
+            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            {
+                int index = nx + (ny*8);
+                attacks |= (1ULL << index);
+            }
+
+        }
+        pawnAttacks[1][sq] = attacks;
+    }
+}
+void Game::setupLookups()
+{
+    setupKnightLookup();
+    setupKingLookup();
+    setupPawnLookups();
+}
