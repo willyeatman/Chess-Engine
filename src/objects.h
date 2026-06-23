@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-typedef enum 
+enum Pieces
 {
     //  White pieces
     WHITE_KING, WHITE_QUEEN, WHITE_ROOKS, WHITE_BISHOPS,
@@ -32,9 +32,11 @@ typedef enum
 
     PIECE_COUNT
 
-} Pieces;
+};
 
-typedef enum
+
+
+enum Squares
 {
 
     A1, B1, C1, D1, E1, F1, G1, H1,
@@ -46,7 +48,21 @@ typedef enum
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8
 
-} Squares;
+};
+
+enum Directions
+{
+
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST,
+    NORTH_EAST,
+    NORTH_WEST_KAYNE_REFERENCE_MAYBE,
+    SOUTH_EAST,
+    SOUTH_WEST
+
+};
 
 const std::unordered_map<std::string, Squares> square_map =
 {
@@ -125,9 +141,9 @@ class Game
         uint64_t all_pieces;
         bool white_turn;
         bool game_over;
-        const uint64_t getWhitePieces() const;
-        const uint64_t getBlackPieces() const;
-        const uint64_t getAllPieces() const;
+        uint64_t getWhitePieces() const;
+        uint64_t getBlackPieces() const;
+        uint64_t getAllPieces() const;
         int getPiece(int index) const;
         void printPiece(int index) const;
         void getPawnMoves(std::vector<Move>& m, bool isWhite);
@@ -137,6 +153,7 @@ class Game
         void getBishopMoves(std::vector<Move>& m, bool isWhite);
         void getKnightMoves(std::vector<Move>& m, bool isWhite);
         void getMoves(std::vector<Move>& m, bool isWhite);
+        void getAllMoves(std::vector<Move>& m);
         void setupKnightLookup();
         void setupKingLookup();
         void setupPawnLookups();

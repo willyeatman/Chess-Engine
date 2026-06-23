@@ -1,6 +1,5 @@
 #include "objects.h"
 
-
 Game::Game()
 {
     white_turn = 1;
@@ -140,19 +139,19 @@ int Game::getPiece(int index) const
 }
 
 
-const uint64_t Game::getWhitePieces() const
+uint64_t Game::getWhitePieces() const
 {
     return board[WHITE_PAWNS] | board[WHITE_BISHOPS] |
            board[WHITE_ROOKS] | board[WHITE_KNIGHTS] |
            board[WHITE_QUEEN] | board[WHITE_KING];
 }
-const uint64_t Game::getBlackPieces() const
+uint64_t Game::getBlackPieces() const
 {
     return board[BLACK_PAWNS] | board[BLACK_BISHOPS] |
            board[BLACK_ROOKS] | board[BLACK_KNIGHTS] |
            board[BLACK_QUEEN] | board[BLACK_KING];
 }
-const uint64_t Game::getAllPieces() const
+uint64_t Game::getAllPieces() const
 {
     return getWhitePieces() | getBlackPieces();
 }
@@ -282,6 +281,268 @@ void Game::getKnightMoves(std::vector<Move>& m, bool isWhite)
     }
 }
 
+void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
+{
+    uint64_t rooks = isWhite ? board[WHITE_ROOKS] : board[BLACK_ROOKS];
+    uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
+    uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    Directions directions[] = {NORTH, EAST, SOUTH, WEST};
+
+    while (rooks)
+    {
+        int from = __builtin_ctzll(rooks);
+        int x = from % 8;
+        int y = from / 8;
+        for (auto d : directions)
+        {
+            int dx;
+            int dy;
+            switch (d)
+            {
+            case NORTH:
+                dx = 0;
+                dy = 1;
+                break;
+            case EAST:
+                dx = 1;
+                dy = 0;
+                break;
+            case SOUTH:
+                dx = 0;
+                dy = -1;
+                break;
+            case WEST:
+                dx = -1;
+                dy = 0;
+                break;
+            default:
+                std::cout << "getRookMoves() Error - Switch" << std::endl;
+                throw;
+            }
+            int nx = x + dx;
+            int ny = y + dy;
+
+            while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8)
+            {
+                int index = (8*ny) + nx;
+                uint64_t location = 1ULL << index;
+                if (location & enemyPieces)
+                {   
+                    m.push_back(Move{from, index, 0});
+                    break;
+                } 
+                else if (location & ownPieces)
+                {
+                    break;
+                }
+                else
+                {
+                    m.push_back(Move{from, index, 0});
+                }
+                nx += dx;
+                ny += dy;
+            }
+        }
+        rooks &= rooks - 1; 
+    }
+}
+
+void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
+{
+    uint64_t bishops = isWhite ? board[WHITE_BISHOPS] : board[BLACK_BISHOPS];
+    uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
+    uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    Directions directions[] = {NORTH_EAST, NORTH_WEST_KAYNE_REFERENCE_MAYBE, SOUTH_EAST, SOUTH_WEST};
+
+    while (bishops)
+    {
+        int from = __builtin_ctzll(bishops);
+        int x = from % 8;
+        int y = from / 8;
+        for (auto d : directions)
+        {
+            int dx;
+            int dy;
+            switch (d)
+            {
+            case NORTH_EAST:
+                dx = 1;
+                dy = 1;
+                break;
+            case NORTH_WEST_KAYNE_REFERENCE_MAYBE:
+                dx = -1;
+                dy = 1;
+                break;
+            case SOUTH_EAST:
+                dx = 1;
+                dy = -1;
+                break;
+            case SOUTH_WEST:
+                dx = -1;
+                dy = -1;
+                break;
+            default:
+                std::cout << "getBishopMoves() Error - Switch" << std::endl;
+                throw;
+            }
+            int nx = x + dx;
+            int ny = y + dy;
+
+            while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8)
+            {
+                int index = (8*ny) + nx;
+                uint64_t location = 1ULL << index;
+                if (location & enemyPieces)
+                {   
+                    m.push_back(Move{from, index, 0});
+                    break;
+                } 
+                else if (location & ownPieces)
+                {
+                    break;
+                }
+                else
+                {
+                    m.push_back(Move{from, index, 0});
+                }
+                nx += dx;
+                ny += dy;
+            }
+        }
+        bishops &= bishops - 1; 
+    }
+}
+
+void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
+{
+    uint64_t queen = isWhite ? board[WHITE_QUEEN] : board[BLACK_QUEEN];
+    uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
+    uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
+
+    Directions directions_r[] = {NORTH, EAST, SOUTH, WEST};
+    Directions directions_b[] = {NORTH_EAST, NORTH_WEST_KAYNE_REFERENCE_MAYBE, SOUTH_EAST, SOUTH_WEST};
+
+    uint64_t queen_copy = queen;
+    while (queen_copy)
+    {
+        int from = __builtin_ctzll(queen_copy);
+        int x = from % 8;
+        int y = from / 8;
+        for (auto d : directions_r)
+        {
+            int dx;
+            int dy;
+            switch (d)
+            {
+            case NORTH:
+                dx = 0;
+                dy = 1;
+                break;
+            case EAST:
+                dx = 1;
+                dy = 0;
+                break;
+            case SOUTH:
+                dx = 0;
+                dy = -1;
+                break;
+            case WEST:
+                dx = -1;
+                dy = 0;
+                break;
+            default:
+                std::cout << "getRookMoves() Error - Switch" << std::endl;
+                throw;
+            }
+            int nx = x + dx;
+            int ny = y + dy;
+
+            while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8)
+            {
+                int index = (8*ny) + nx;
+                uint64_t location = 1ULL << index;
+                if (location & enemyPieces)
+                {   
+                    m.push_back(Move{from, index, 0});
+                    break;
+                } 
+                else if (location & ownPieces)
+                {
+                    break;
+                }
+                else
+                {
+                    m.push_back(Move{from, index, 0});
+                }
+                nx += dx;
+                ny += dy;
+            }
+        }
+        queen_copy &= queen_copy - 1; 
+    }
+
+    queen_copy = queen;
+    while (queen_copy)
+    {
+        int from = __builtin_ctzll(queen_copy);
+        int x = from % 8;
+        int y = from / 8;
+        for (auto d : directions_b)
+        {
+            int dx;
+            int dy;
+            switch (d)
+            {
+            case NORTH_EAST:
+                dx = 1;
+                dy = 1;
+                break;
+            case NORTH_WEST_KAYNE_REFERENCE_MAYBE:
+                dx = -1;
+                dy = 1;
+                break;
+            case SOUTH_EAST:
+                dx = 1;
+                dy = -1;
+                break;
+            case SOUTH_WEST:
+                dx = -1;
+                dy = -1;
+                break;
+            default:
+                std::cout << "getBishopMoves() Error - Switch" << std::endl;
+                throw;
+            }
+            int nx = x + dx;
+            int ny = y + dy;
+
+            while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8)
+            {
+                int index = (8*ny) + nx;
+                uint64_t location = 1ULL << index;
+                if (location & enemyPieces)
+                {   
+                    m.push_back(Move{from, index, 0});
+                    break;
+                } 
+                else if (location & ownPieces)
+                {
+                    break;
+                }
+                else
+                {
+                    m.push_back(Move{from, index, 0});
+                }
+                nx += dx;
+                ny += dy;
+            }
+        }
+        queen_copy &= queen_copy - 1; 
+    }
+}
+
 void Game::setupKnightLookup()
 {
     const int dx[] = {-1, -1, -2, -2, 2, 2, 1, 1};
@@ -390,4 +651,19 @@ void Game::setupLookups()
     setupKnightLookup();
     setupKingLookup();
     setupPawnLookups();
+}
+
+void Game::getMoves(std::vector<Move>& m, bool isWhite) // Must Be called after setup lookups
+{
+    getPawnMoves(m, isWhite);
+    getKingMoves(m, isWhite);
+    getQueenMoves(m, isWhite);
+    getRookMoves(m, isWhite);
+    getBishopMoves(m, isWhite);
+    getKnightMoves(m, isWhite);
+}
+void Game::getAllMoves(std::vector<Move>& m)
+{
+    getMoves(m, true);
+    getMoves(m, false);
 }
