@@ -34,7 +34,14 @@ enum Pieces
 
 };
 
-
+enum GameState
+{
+    CHECK,
+    CHECKMATE,
+    INVALID_MOVE,
+    VALID_MOVE,
+    ERROR
+};
 
 enum Squares
 {
@@ -97,7 +104,6 @@ constexpr uint64_t RANK_6 = 0x0000FF0000000000ULL;   // squares 40–47
 constexpr uint64_t RANK_7 = 0x00FF000000000000ULL;   // squares 48–55
 constexpr uint64_t RANK_8 = 0xFF00000000000000ULL;   // squares 56–63
 
-
 constexpr uint64_t FILE_A = 0x0101010101010101ULL; 
 constexpr uint64_t FILE_B = 0x0202020202020202ULL;
 constexpr uint64_t FILE_C = 0x0404040404040404ULL;
@@ -106,7 +112,6 @@ constexpr uint64_t FILE_E = 0x1010101010101010ULL;
 constexpr uint64_t FILE_F = 0x2020202020202020ULL;
 constexpr uint64_t FILE_G = 0x4040404040404040ULL;
 constexpr uint64_t FILE_H = 0x8080808080808080ULL;
-
 
 struct Move
 {
@@ -124,21 +129,17 @@ typedef enum
 
 } MoveType;
 
-
 class Game
 {
     public:
         Game();
         ~Game();
-        void updateGame(const int p, const int d);
+        GameState updateGame(const int p, const int d);
         void printGame();
         void runGame();
     private:
         std::array<uint64_t,12> board;
         std::vector<Move> moves;
-        uint64_t white_pieces;
-        uint64_t black_pieces;
-        uint64_t all_pieces;
         bool white_turn;
         bool game_over;
         uint64_t getWhitePieces() const;
@@ -161,4 +162,7 @@ class Game
         uint64_t knightAttacks[64];
         uint64_t pawnAttacks[2][64]; // zero for black, one for white
         uint64_t kingAttacks[64];
+        std::array<uint64_t, 12> makeMove(Move m);
+        void unmakeMove(std::array<uint64_t,12> bitboard);
+        bool isKinginCheck(bool isWhite);
 };

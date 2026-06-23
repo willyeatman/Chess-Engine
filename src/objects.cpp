@@ -2,7 +2,7 @@
 
 Game::Game()
 {
-    white_turn = 1;
+    white_turn = true;
     game_over = false;
 
     board[WHITE_PAWNS] = 0x000000000000FF00;
@@ -33,6 +33,7 @@ void Game::runGame()
         printGame();
         int piece = 0;
         int destination = 0;
+        GameState state;
         std::string p, d;
         bool inputValid = false;
 
@@ -59,28 +60,100 @@ void Game::runGame()
             }
         }
 
-        updateGame(piece, destination);
-    }
-}
-
-void Game::updateGame(const int p, const int d)
-{
-    uint64_t destination = 1Ull << d;
-    uint64_t peice = 1Ull << p;
-
-    if (!(destination & getAllPieces()))
-    {
-        for (int i = WHITE_KING; i < PIECE_COUNT; i++)
+        state = updateGame(piece, destination); 
+        if (state == CHECKMATE)
         {
-            if (peice & board[i])
-            {
-                board[i] ^= peice;
-                board[i] |= destination;
-                break;
-            }
+            game_over = true;
         }
     }
 }
+
+bool operator == (Move m1, Move m2)
+{
+    if ((m1.from == m2.from) && (m1.to == m2.to))
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
+}
+
+GameState Game::updateGame(const int p, const int d)
+{
+    Move move = {p,d, 0};
+    std::vector<Move> legalMoves;
+    getMoves(legalMoves, white_turn);
+
+    for (auto& m : legalMoves)
+    {
+        if (m == move) 
+        {
+            std::array<uint64_t,12> bitboard_copy = makeMove(m);
+            bool kingCheck = isKinginCheck(white_turn);
+            if (kingCheck)
+            {
+                unmakeMove(bitboard_copy);
+                break;
+            }
+            else
+            {
+                white_turn = !white_turn;
+                return VALID_MOVE;
+            }
+        }
+    }
+    return ERROR;
+}
+
+bool Game::isKinginCheck(bool isWhite)
+{
+    std::vector<Move> enemyMoves;
+    getMoves(enemyMoves, !isWhite);
+    uint64_t king = isWhite ? board[WHITE_KING] : board[BLACK_KING];
+    int kingSquare = __builtin_ctzll(king);
+
+    for (auto m : enemyMoves)
+    {
+        if (m.to == kingSquare)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::array<uint64_t,12> Game::makeMove(Move m)
+{
+    std::array<uint64_t,12> bitboard_copy = board;
+    uint64_t to_bit = 1Ull << m.to;
+    uint64_t from_bit = 1Ull << m.from;
+
+    for (auto& x : board)
+    {
+        if (x & from_bit)
+        {
+            x &= ~from_bit;
+            x |= to_bit;
+            for (auto& y : board)
+            {
+                if (&y != &x)
+                {
+                    y &= ~to_bit;
+                } 
+            }
+            break;
+        }
+    }
+    return bitboard_copy;
+}
+
+void Game::unmakeMove(std::array<uint64_t,12> bitboard)
+{
+    board = bitboard;
+}
+
 
 void Game::printGame()
 {
@@ -155,16 +228,6 @@ uint64_t Game::getAllPieces() const
 {
     return getWhitePieces() | getBlackPieces();
 }
-
-/*
-        static int games;
-        std::array<uint64_t,12> board;
-        uint64_t white_pieces;
-        uint64_t black_pieces;
-        uint64_t all_pieces;
-        bool white_turn;
-        bool game_over = false;
-*/
 
 void Game::printPiece(int index) const
 {
@@ -569,6 +632,7 @@ void Game::setupKnightLookup()
         knightAttacks[sq] = attacks;
     }
 }
+
 void Game::setupKingLookup()
 {
     const int dx[] = {0, 0, 1, 1, 1, -1, -1, -1};
