@@ -19,6 +19,7 @@
 #include "screen.h"
 #include <unordered_map>
 #include <vector>
+#include "debug.h"
 
 enum Pieces
 {
@@ -165,4 +166,5 @@ class Game
         std::array<uint64_t, 12> makeMove(Move m);
         void unmakeMove(std::array<uint64_t,12> bitboard);
         bool isKinginCheck(bool isWhite);
+        int turnNum;
 };

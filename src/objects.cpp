@@ -4,6 +4,7 @@ Game::Game()
 {
     white_turn = true;
     game_over = false;
+    turnNum = 1;
 
     board[WHITE_PAWNS] = 0x000000000000FF00;
     board[WHITE_BISHOPS] = 0x0000000000000024;
@@ -20,15 +21,26 @@ Game::Game()
     board[BLACK_KING] = 0x1000000000000000; 
 
 }
+
 Game::~Game(){};
 
 void Game::runGame()
 {
+    Log("Initialising game\n");
+    Log("Initialisng Lookups ... ");
 
     setupLookups();
 
+    Log("Okay\n");
+
     while (!game_over)
     {
+        Log("Turn: ");
+        Log(turnNum);
+        Log(" (");
+        Log((white_turn ? "white" : "black"));
+        Log(") \n");
+
         clearScreen();
         printGame();
         int piece = 0;
@@ -39,7 +51,7 @@ void Game::runGame()
 
         while (!inputValid)
         {
-
+            Log("Waiting for input ...");
             std::cin >> p >> d;
             
 
@@ -53,10 +65,12 @@ void Game::runGame()
                 piece = square_map.at(p);
                 destination = square_map.at(d);
                 inputValid = true;
+                Log("Valid Move\n");
             }
             catch(const std::exception& e)
             {
                 std::cerr << "Invalid Move" << '\n';
+                Log(" Invalid Move");
             }
         }
 
@@ -89,7 +103,8 @@ GameState Game::updateGame(const int p, const int d)
     for (auto& m : legalMoves)
     {
         if (m == move) 
-        {
+        {   
+            Log("Trying move ...");
             std::array<uint64_t,12> bitboard_copy = makeMove(m);
             bool kingCheck = isKinginCheck(white_turn);
             if (kingCheck)
@@ -100,6 +115,10 @@ GameState Game::updateGame(const int p, const int d)
             else
             {
                 white_turn = !white_turn;
+                if (white_turn)
+                {
+                    turnNum++;
+                }
                 return VALID_MOVE;
             }
         }
@@ -129,7 +148,7 @@ std::array<uint64_t,12> Game::makeMove(Move m)
     std::array<uint64_t,12> bitboard_copy = board;
     uint64_t to_bit = 1Ull << m.to;
     uint64_t from_bit = 1Ull << m.from;
-
+    Log("Making move\n");
     for (auto& x : board)
     {
         if (x & from_bit)
@@ -622,7 +641,7 @@ void Game::setupKnightLookup()
             int nx = x + dx[m];
             int ny = y + dy[m];
 
-            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            if (ny >= 0 && ny < 8 && nx >= 0 && nx < 8)
             {
                 int index = nx + (ny*8);
                 attacks |= (1ULL << index);
@@ -649,14 +668,14 @@ void Game::setupKingLookup()
             int nx = x + dx[m];
             int ny = y + dy[m];
 
-            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            if (ny >= 0 && ny < 8 && nx >= 0 && nx < 8)
             {
                 int index = nx + (ny*8);
                 attacks |= (1ULL << index);
             }
 
         }
-        knightAttacks[sq] = attacks;
+        kingAttacks[sq] = attacks;
     }
 }
 void Game::setupPawnLookups()
@@ -679,7 +698,7 @@ void Game::setupPawnLookups()
             int nx = x + dx_b[m];
             int ny = y + dy_b[m];
 
-            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            if (ny >= 0 && ny < 8 && nx >= 0 && nx < 8)
             {
                 int index = nx + (ny*8);
                 attacks |= (1ULL << index);
@@ -700,7 +719,7 @@ void Game::setupPawnLookups()
             int nx = x + dx_w[m];
             int ny = y + dy_w[m];
 
-            if (ny >= 0 && ny < 8 && nx >= 0 && ny < 8)
+            if (ny >= 0 && ny < 8 && nx >= 0 && nx < 8)
             {
                 int index = nx + (ny*8);
                 attacks |= (1ULL << index);
