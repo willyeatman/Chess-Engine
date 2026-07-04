@@ -7,15 +7,16 @@ std::ofstream debugLog("docs/log.txt", std::ios::trunc);
     void printMoves(std::vector<Move> &moves)
     {
         int count = 0;
+        Log("Move\n");
         for (auto& m : moves)
         {
-            Log("Move: ");
+            Log("\t");
             Log(++count);
-            Log("\n");
+            Log(":\n");
             Log("\tFrom ");
-            Log(m.from);
+            Log(squareNames[m.from]);
             Log(" -> ");
-            Log(m.to);
+            Log(squareNames[m.to]);
             Log('\n');
         }
     }
