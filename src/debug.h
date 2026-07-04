@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include "objects.h"
 
 extern std::ofstream debugLog;
 
@@ -10,7 +11,9 @@ extern std::ofstream debugLog;
         debugLog << msg;
         debugLog.flush();
     }
+    void printMoves(std::vector<Move> &moves);
 #else
     template <typename T>
     inline void Log(const T&) {}
+    inline void printMoves(std::vector<Move>&) {}
 #endif

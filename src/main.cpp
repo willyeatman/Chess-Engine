@@ -15,7 +15,7 @@ int main() {
 
     startScreen();
     game.runGame();
-    //endScreen();
+    endScreen();
 
     return 0;
 }

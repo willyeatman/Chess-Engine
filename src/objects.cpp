@@ -1,4 +1,5 @@
 #include "objects.h"
+#include "debug.h"
 
 Game::Game()
 {
@@ -43,6 +44,9 @@ void Game::runGame()
 
         clearScreen();
         printGame();
+        moves.clear();
+        getMoves(moves, white_turn);
+        printMoves(moves);
         int piece = 0;
         int destination = 0;
         GameState state;
@@ -51,7 +55,7 @@ void Game::runGame()
 
         while (!inputValid)
         {
-            Log("Waiting for input ...");
+            Log("Waiting for input ... ");
             std::cin >> p >> d;
             
 
@@ -65,15 +69,15 @@ void Game::runGame()
                 piece = square_map.at(p);
                 destination = square_map.at(d);
                 inputValid = true;
-                Log("Valid Move\n");
+                Log("Valid Input\n");
             }
             catch(const std::exception& e)
             {
-                std::cerr << "Invalid Move" << '\n';
-                Log(" Invalid Move");
+                std::cerr << "Invalid Input" << '\n';
+                Log(" Invalid Input\n");
             }
         }
-
+        Log("Calling updateGame():\n");
         state = updateGame(piece, destination); 
         if (state == CHECKMATE)
         {
@@ -98,27 +102,33 @@ GameState Game::updateGame(const int p, const int d)
 {
     Move move = {p,d, 0};
     std::vector<Move> legalMoves;
+    Log("\tCalling getMoves()\n");
     getMoves(legalMoves, white_turn);
 
+    Log("\tTesting moves against possible moves\n");
     for (auto& m : legalMoves)
     {
         if (m == move) 
         {   
-            Log("Trying move ...");
+            Log("\tTrying move\n");
             std::array<uint64_t,12> bitboard_copy = makeMove(m);
             bool kingCheck = isKinginCheck(white_turn);
             if (kingCheck)
             {
+                std::cerr << "King in Check" << std::endl;
+                Log("\t\tKing in Check\n");
                 unmakeMove(bitboard_copy);
                 break;
             }
             else
             {
+
                 white_turn = !white_turn;
                 if (white_turn)
                 {
                     turnNum++;
                 }
+                Log("\t\tValid Move\n");
                 return VALID_MOVE;
             }
         }
@@ -170,7 +180,9 @@ std::array<uint64_t,12> Game::makeMove(Move m)
 
 void Game::unmakeMove(std::array<uint64_t,12> bitboard)
 {
+    Log("Unmaking Move... ");
     board = bitboard;
+    Log("Done\n");
 }
 
 

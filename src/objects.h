@@ -19,7 +19,6 @@
 #include "screen.h"
 #include <unordered_map>
 #include <vector>
-#include "debug.h"
 
 enum Pieces
 {

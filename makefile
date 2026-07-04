@@ -39,3 +39,4 @@ outputs/debug_debug.o: src/debug.cpp src/debug.h
 clean:
 	rm -f outputs/*.o
 	rm -f outputs/game
+	rm -f outputs/game_debug

@@ -1,3 +1,6 @@
 // Ignoring object files
 *.o
 outputs/game
+outputs/game_debug
+docs/log.txt
+docs/notes
