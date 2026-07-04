@@ -644,8 +644,8 @@ void Game::setupKnightLookup()
 
     for (int sq = 0; sq < 64; sq++)
     {
-        int y = sq % 8;
-        int x = sq / 8;
+        int y = sq / 8;
+        int x = sq % 8;
         uint64_t attacks = 0;
 
         for (int m = 0; m < 8; m++)
@@ -671,8 +671,8 @@ void Game::setupKingLookup()
 
     for (int sq = 0; sq < 64; sq++)
     {
-        int y = sq % 8;
-        int x = sq / 8;
+        int y = sq / 8;
+        int x = sq % 8;
         uint64_t attacks = 0;
 
         for (int m = 0; m < 8; m++)
