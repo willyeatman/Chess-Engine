@@ -38,6 +38,7 @@ enum GameState
 {
     CHECK,
     CHECKMATE,
+    STALEMATE,
     INVALID_MOVE,
     VALID_MOVE,
     ERROR
@@ -45,7 +46,6 @@ enum GameState
 
 enum Squares
 {
-
     A1, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
@@ -54,10 +54,10 @@ enum Squares
     A6, B6, C6, D6, E6, F6, G6, H6,
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8
-
 };
 
-constexpr const char* squareNames[] = {
+constexpr const char* squareNames[] = 
+{
     "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
     "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
     "A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
@@ -70,7 +70,6 @@ constexpr const char* squareNames[] = {
 
 enum Directions
 {
-
     NORTH,
     EAST,
     SOUTH,
@@ -79,7 +78,6 @@ enum Directions
     NORTH_WEST_KAYNE_REFERENCE_MAYBE,
     SOUTH_EAST,
     SOUTH_WEST
-
 };
 
 const std::unordered_map<std::string, Squares> square_map =
@@ -94,7 +92,8 @@ const std::unordered_map<std::string, Squares> square_map =
     {"A8", A8}, {"B8", B8}, {"C8", C8}, {"D8", D8}, {"E8", E8}, {"F8", F8}, {"G8", G8}, {"H8", H8},
 };
 
-constexpr const char* piece_chars[12] = {
+constexpr const char* piece_chars[12] = 
+{
     "K","Q","R","B","N","P",   // white king queen rook bishop knight pawn
     "k","q","r","b","n","p"    // black king queen rook bishop knight pawn
 };
@@ -129,7 +128,6 @@ struct Move
     int from;
     int to;
     int type;
-
 };
 
 typedef enum 
@@ -137,7 +135,6 @@ typedef enum
     DEFAULT,
     CAPTURE,
     EN_PASSANT
-
 } MoveType;
 
 class Game
@@ -177,4 +174,7 @@ class Game
         void unmakeMove(std::array<uint64_t,12> bitboard);
         bool isKinginCheck(bool isWhite);
         int turnNum;
+        GameState checkGameEnd(std::array<uint64_t,12> bitboard);
+        bool checkStalemate(std::array<uint64_t,12> bitboard);
+        bool checkCheckmate(std::array<uint64_t,12> bitboard);
 };

@@ -19,7 +19,6 @@ outputs/objects.o: src/objects.cpp src/objects.h src/screen.h src/debug.h
 outputs/debug.o: src/debug.cpp src/debug.h
 	$(CXX) -c src/debug.cpp -o outputs/debug.o $(FLAGS)
 
-
 debug: outputs/main_debug.o outputs/screen_debug.o outputs/objects_debug.o outputs/debug_debug.o
 	$(CXX) outputs/main_debug.o outputs/screen_debug.o outputs/objects_debug.o outputs/debug_debug.o -o outputs/game_debug $(FLAGS) -DDEBUG
 
@@ -34,7 +33,6 @@ outputs/objects_debug.o: src/objects.cpp src/objects.h src/screen.h src/debug.h
 
 outputs/debug_debug.o: src/debug.cpp src/debug.h
 	$(CXX) -c src/debug.cpp -o outputs/debug_debug.o $(FLAGS) -DDEBUG
-
 
 clean:
 	rm -f outputs/*.o

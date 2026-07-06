@@ -20,7 +20,6 @@ Game::Game()
     board[BLACK_KNIGHTS] = 0x4200000000000000;
     board[BLACK_QUEEN] = 0x0800000000000000;
     board[BLACK_KING] = 0x1000000000000000; 
-
 }
 
 Game::~Game(){};
@@ -33,6 +32,8 @@ void Game::runGame()
     setupLookups();
 
     Log("Okay\n");
+
+    GameState state;
 
     while (!game_over)
     {
@@ -49,7 +50,6 @@ void Game::runGame()
         printMoves(moves);
         int piece = 0;
         int destination = 0;
-        GameState state;
         std::string p, d;
         bool inputValid = false;
 
@@ -79,11 +79,15 @@ void Game::runGame()
         }
         Log("Calling updateGame():\n");
         state = updateGame(piece, destination); 
-        if (state == CHECKMATE)
+        if (state == CHECKMATE | state == STALEMATE)
         {
             game_over = true;
         }
     }
+    clearScreen();
+    std::cout << "Game over - " << ((state == CHECKMATE)? "Checkmate" : "Stalemate") << std::endl;
+    Log((state == CHECKMATE)? "Checkmate" : "Stalemate");
+    std::cin.get();
 }
 
 bool operator == (Move m1, Move m2)
@@ -112,8 +116,7 @@ GameState Game::updateGame(const int p, const int d)
         {   
             Log("\tTrying move\n");
             std::array<uint64_t,12> bitboard_copy = makeMove(m);
-            bool kingCheck = isKinginCheck(white_turn);
-            if (kingCheck)
+            if (isKinginCheck(white_turn))
             {
                 std::cerr << "King in Check" << std::endl;
                 Log("\t\tKing in Check\n");
@@ -122,14 +125,17 @@ GameState Game::updateGame(const int p, const int d)
             }
             else
             {
-
                 white_turn = !white_turn;
                 if (white_turn)
                 {
                     turnNum++;
                 }
                 Log("\t\tValid Move\n");
-                return VALID_MOVE;
+                /*
+                Okay so this is checking the loss conditions for
+                the side has had a move made against it
+                */ 
+                return checkGameEnd(board);
             }
         }
     }
@@ -158,7 +164,6 @@ std::array<uint64_t,12> Game::makeMove(Move m)
     std::array<uint64_t,12> bitboard_copy = board;
     uint64_t to_bit = 1Ull << m.to;
     uint64_t from_bit = 1Ull << m.from;
-    Log("Making move\n");
     for (auto& x : board)
     {
         if (x & from_bit)
@@ -180,9 +185,7 @@ std::array<uint64_t,12> Game::makeMove(Move m)
 
 void Game::unmakeMove(std::array<uint64_t,12> bitboard)
 {
-    Log("Unmaking Move... ");
     board = bitboard;
-    Log("Done\n");
 }
 
 
@@ -762,3 +765,91 @@ void Game::getAllMoves(std::vector<Move>& m)
     getMoves(m, true);
     getMoves(m, false);
 }
+
+GameState Game::checkGameEnd(std::array<uint64_t,12> bitboard)
+{
+    if (checkCheckmate(bitboard))
+    {
+        return CHECKMATE;
+    }
+    else if (checkStalemate(bitboard))
+    {
+        return STALEMATE;
+    }
+
+    return VALID_MOVE;
+}
+
+// All stuff under here isnt finished 
+
+/**
+ * @param bitboard 
+ * @return returns board stalemate status
+ */
+bool Game::checkStalemate(std::array<uint64_t,12> bitboard)
+{
+    // Stalemate logic
+    if (isKinginCheck(white_turn)) // I dont like the white_turn name, need 2 
+    {
+        return false;
+    }
+
+    std::vector<Move> moves_cpy = moves;
+    int no_legal_moves = 0;
+
+    for (auto& m : moves_cpy)
+    {
+        std::array<uint64_t, 12> board_copy = makeMove(m);
+
+        if (!isKinginCheck(white_turn))
+        {
+            no_legal_moves++;
+        }
+        unmakeMove(board_copy);
+    }
+
+    if (no_legal_moves == 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @param bitboard 
+ * @return returns board checkmate status
+ */
+bool Game::checkCheckmate(std::array<uint64_t,12> bitboard)
+{
+
+    if (!isKinginCheck(white_turn))
+    {
+        return false;
+    }
+
+    std::vector<Move> moves_cpy = moves;
+    bool legal_move = false;
+
+    for (auto& m : moves_cpy)
+    {
+        std::array<uint64_t, 12> board_copy = makeMove(m);
+
+        if (!isKinginCheck(white_turn))
+        {
+            legal_move = true;
+            unmakeMove(board_copy);
+            break;
+
+        }
+        unmakeMove(board_copy);
+    }
+
+    if (legal_move)
+    {
+        return false;
+    }
+
+    return true;
+}
+
