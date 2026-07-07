@@ -34,7 +34,7 @@ enum Pieces
 
 };
 
-enum GameState
+enum MoveState
 {
     CHECK,
     CHECKMATE,
@@ -137,16 +137,31 @@ typedef enum
     EN_PASSANT
 } MoveType;
 
+struct CastlingRights
+{
+    bool longRookFirstMove;
+    bool ShortRookFirstMove;
+    bool KingFirstMove;
+};
+
+struct GameState
+{
+    std::array<uint64_t, 12> board;
+    CastlingRights white_castling_rights;
+    CastlingRights black_castling_rights;
+    int enPassasntSquare;
+};
+
 class Game
 {
     public:
         Game();
         ~Game();
-        GameState updateGame(const int p, const int d);
+        MoveState updateGame(const int p, const int d);
         void printGame();
         void runGame();
     private:
-        std::array<uint64_t,12> board;
+        GameState game;
         std::vector<Move> moves;
         bool white_turn;
         bool game_over;
@@ -170,11 +185,11 @@ class Game
         uint64_t knightAttacks[64];
         uint64_t pawnAttacks[2][64]; // zero for black, one for white
         uint64_t kingAttacks[64];
-        std::array<uint64_t, 12> makeMove(Move m);
-        void unmakeMove(std::array<uint64_t,12> bitboard);
+        GameState makeMove(Move m);
+        void unmakeMove(GameState g);
         bool isKinginCheck(bool isWhite);
         int turnNum;
-        GameState checkGameEnd(std::array<uint64_t,12> bitboard);
-        bool checkStalemate(std::array<uint64_t,12> bitboard);
-        bool checkCheckmate(std::array<uint64_t,12> bitboard);
+        MoveState checkGameEnd(bool isWhiteTurn);
+        bool checkStalemate(bool isWhiteTurn);
+        bool checkCheckmate(bool isWhiteTurn);
 };

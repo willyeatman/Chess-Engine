@@ -7,19 +7,33 @@ Game::Game()
     game_over = false;
     turnNum = 1;
 
-    board[WHITE_PAWNS] = 0x000000000000FF00;
-    board[WHITE_BISHOPS] = 0x0000000000000024;
-    board[WHITE_ROOKS] = 0x0000000000000081;
-    board[WHITE_KNIGHTS] = 0x0000000000000042;
-    board[WHITE_QUEEN] = 0x0000000000000008;
-    board[WHITE_KING] = 0x0000000000000010;
+    game.board[WHITE_PAWNS] = 0x000000000000FF00;
+    game.board[WHITE_BISHOPS] = 0x0000000000000024;
+    game.board[WHITE_ROOKS] = 0x0000000000000081;
+    game.board[WHITE_KNIGHTS] = 0x0000000000000042;
+    game.board[WHITE_QUEEN] = 0x0000000000000008;
+    game.board[WHITE_KING] = 0x0000000000000010;
 
-    board[BLACK_PAWNS] = 0x00FF000000000000;
-    board[BLACK_BISHOPS] = 0x2400000000000000;
-    board[BLACK_ROOKS] = 0x8100000000000000; 
-    board[BLACK_KNIGHTS] = 0x4200000000000000;
-    board[BLACK_QUEEN] = 0x0800000000000000;
-    board[BLACK_KING] = 0x1000000000000000; 
+    game.board[BLACK_PAWNS] = 0x00FF000000000000;
+    game.board[BLACK_BISHOPS] = 0x2400000000000000;
+    game.board[BLACK_ROOKS] = 0x8100000000000000; 
+    game.board[BLACK_KNIGHTS] = 0x4200000000000000;
+    game.board[BLACK_QUEEN] = 0x0800000000000000;
+    game.board[BLACK_KING] = 0x1000000000000000; 
+
+    game.white_castling_rights = {true, true, true};
+    game.black_castling_rights = {true, true, true};
+
+    /*
+    //! For testing stalemates
+    for (auto& bb : board) bb = 0;
+
+    board[BLACK_KING]  = 1ULL << 56;   // a8
+    board[WHITE_QUEEN] = 1ULL << 41-8;   // b6
+    board[WHITE_KING]  = 1ULL << 42;   // c6
+
+    white_turn = true;
+    */
 }
 
 Game::~Game(){};
@@ -33,7 +47,7 @@ void Game::runGame()
 
     Log("Okay\n");
 
-    GameState state;
+    MoveState state;
 
     while (!game_over)
     {
@@ -102,7 +116,7 @@ bool operator == (Move m1, Move m2)
     }
 }
 
-GameState Game::updateGame(const int p, const int d)
+MoveState Game::updateGame(const int p, const int d)
 {
     Move move = {p,d, 0};
     std::vector<Move> legalMoves;
@@ -115,12 +129,12 @@ GameState Game::updateGame(const int p, const int d)
         if (m == move) 
         {   
             Log("\tTrying move\n");
-            std::array<uint64_t,12> bitboard_copy = makeMove(m);
+            GameState game_copy = makeMove(m);
             if (isKinginCheck(white_turn))
             {
                 std::cerr << "King in Check" << std::endl;
                 Log("\t\tKing in Check\n");
-                unmakeMove(bitboard_copy);
+                unmakeMove(game_copy);
                 break;
             }
             else
@@ -135,7 +149,7 @@ GameState Game::updateGame(const int p, const int d)
                 Okay so this is checking the loss conditions for
                 the side has had a move made against it
                 */ 
-                return checkGameEnd(board);
+                return checkGameEnd(white_turn);
             }
         }
     }
@@ -146,7 +160,7 @@ bool Game::isKinginCheck(bool isWhite)
 {
     std::vector<Move> enemyMoves;
     getMoves(enemyMoves, !isWhite);
-    uint64_t king = isWhite ? board[WHITE_KING] : board[BLACK_KING];
+    uint64_t king = isWhite ? game.board[WHITE_KING] : game.board[BLACK_KING];
     int kingSquare = __builtin_ctzll(king);
 
     for (auto m : enemyMoves)
@@ -159,18 +173,18 @@ bool Game::isKinginCheck(bool isWhite)
     return false;
 }
 
-std::array<uint64_t,12> Game::makeMove(Move m)
+GameState Game::makeMove(Move m)
 {
-    std::array<uint64_t,12> bitboard_copy = board;
+    GameState game_copy = game;
     uint64_t to_bit = 1Ull << m.to;
     uint64_t from_bit = 1Ull << m.from;
-    for (auto& x : board)
+    for (auto& x : game.board)
     {
         if (x & from_bit)
         {
             x &= ~from_bit;
             x |= to_bit;
-            for (auto& y : board)
+            for (auto& y : game.board)
             {
                 if (&y != &x)
                 {
@@ -180,14 +194,13 @@ std::array<uint64_t,12> Game::makeMove(Move m)
             break;
         }
     }
-    return bitboard_copy;
+    return game_copy;
 }
 
-void Game::unmakeMove(std::array<uint64_t,12> bitboard)
+void Game::unmakeMove(GameState g)
 {
-    board = bitboard;
+    game = g;
 }
-
 
 void Game::printGame()
 {
@@ -223,8 +236,6 @@ void Game::printGame()
         } 
         std::cout << "    h  g  f  e  d  c  b  a\n";
     }
-
-
 }
 
 int Game::getPiece(int index) const
@@ -238,25 +249,24 @@ int Game::getPiece(int index) const
     }
     for (int piece = WHITE_KING; piece < PIECE_COUNT; piece++)
     {
-        if ((binary_location & board[piece]) != 0) return piece;
+        if ((binary_location & game.board[piece]) != 0) return piece;
     }
     
     std::cerr << " This shouldnt Happen, You have problem if this prints" << std::endl;
     return -1;
 }
 
-
 uint64_t Game::getWhitePieces() const
 {
-    return board[WHITE_PAWNS] | board[WHITE_BISHOPS] |
-           board[WHITE_ROOKS] | board[WHITE_KNIGHTS] |
-           board[WHITE_QUEEN] | board[WHITE_KING];
+    return game.board[WHITE_PAWNS] | game.board[WHITE_BISHOPS] |
+           game.board[WHITE_ROOKS] | game.board[WHITE_KNIGHTS] |
+           game.board[WHITE_QUEEN] | game.board[WHITE_KING];
 }
 uint64_t Game::getBlackPieces() const
 {
-    return board[BLACK_PAWNS] | board[BLACK_BISHOPS] |
-           board[BLACK_ROOKS] | board[BLACK_KNIGHTS] |
-           board[BLACK_QUEEN] | board[BLACK_KING];
+    return game.board[BLACK_PAWNS] | game.board[BLACK_BISHOPS] |
+           game.board[BLACK_ROOKS] | game.board[BLACK_KNIGHTS] |
+           game.board[BLACK_QUEEN] | game.board[BLACK_KING];
 }
 uint64_t Game::getAllPieces() const
 {
@@ -281,10 +291,9 @@ void Game::printPiece(int index) const
 
 void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t pawns = isWhite ? board[WHITE_PAWNS] : board[BLACK_PAWNS];
+    uint64_t pawns = isWhite ? game.board[WHITE_PAWNS] : game.board[BLACK_PAWNS];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t empty = ~getAllPieces();
-
 
     if (isWhite)
     {   
@@ -340,7 +349,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
 
 void Game::getKingMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t king = isWhite ? board[WHITE_KING] : board[BLACK_KING];
+    uint64_t king = isWhite ? game.board[WHITE_KING] : game.board[BLACK_KING];
     uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
 
     while (king)
@@ -360,7 +369,7 @@ void Game::getKingMoves(std::vector<Move>& m, bool isWhite)
 
 void Game::getKnightMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t knights = isWhite ? board[WHITE_KNIGHTS] : board[BLACK_KNIGHTS];
+    uint64_t knights = isWhite ? game.board[WHITE_KNIGHTS] : game.board[BLACK_KNIGHTS];
     uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
 
     while (knights)
@@ -380,7 +389,7 @@ void Game::getKnightMoves(std::vector<Move>& m, bool isWhite)
 
 void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t rooks = isWhite ? board[WHITE_ROOKS] : board[BLACK_ROOKS];
+    uint64_t rooks = isWhite ? game.board[WHITE_ROOKS] : game.board[BLACK_ROOKS];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
 
@@ -447,7 +456,7 @@ void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
 
 void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t bishops = isWhite ? board[WHITE_BISHOPS] : board[BLACK_BISHOPS];
+    uint64_t bishops = isWhite ? game.board[WHITE_BISHOPS] : game.board[BLACK_BISHOPS];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
 
@@ -514,7 +523,7 @@ void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
 
 void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
 {
-    uint64_t queen = isWhite ? board[WHITE_QUEEN] : board[BLACK_QUEEN];
+    uint64_t queen = isWhite ? game.board[WHITE_QUEEN] : game.board[BLACK_QUEEN];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t ownPieces = isWhite ? getWhitePieces() : getBlackPieces();
 
@@ -766,13 +775,13 @@ void Game::getAllMoves(std::vector<Move>& m)
     getMoves(m, false);
 }
 
-GameState Game::checkGameEnd(std::array<uint64_t,12> bitboard)
+MoveState Game::checkGameEnd(bool isWhiteTurn)
 {
-    if (checkCheckmate(bitboard))
+    if (checkCheckmate(isWhiteTurn))
     {
         return CHECKMATE;
     }
-    else if (checkStalemate(bitboard))
+    else if (checkStalemate(isWhiteTurn))
     {
         return STALEMATE;
     }
@@ -786,63 +795,67 @@ GameState Game::checkGameEnd(std::array<uint64_t,12> bitboard)
  * @param bitboard 
  * @return returns board stalemate status
  */
-bool Game::checkStalemate(std::array<uint64_t,12> bitboard)
+bool Game::checkStalemate(bool isWhiteTurn)
 {
-    // Stalemate logic
-    if (isKinginCheck(white_turn)) // I dont like the white_turn name, need 2 
+    if (isKinginCheck(isWhiteTurn))
     {
         return false;
     }
 
-    std::vector<Move> moves_cpy = moves;
-    int no_legal_moves = 0;
+    std::vector<Move> moves_cpy;
+    getMoves(moves_cpy, isWhiteTurn);
+    bool legal_move = false;
 
     for (auto& m : moves_cpy)
     {
-        std::array<uint64_t, 12> board_copy = makeMove(m);
+        GameState game_copy = makeMove(m);
 
-        if (!isKinginCheck(white_turn))
+        if (!isKinginCheck(isWhiteTurn))
         {
-            no_legal_moves++;
+            legal_move = true;
+            unmakeMove(game_copy);
+            break;
+
         }
-        unmakeMove(board_copy);
+        unmakeMove(game_copy);
     }
 
-    if (no_legal_moves == 0)
+    if (legal_move)
     {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 /**
  * @param bitboard 
  * @return returns board checkmate status
  */
-bool Game::checkCheckmate(std::array<uint64_t,12> bitboard)
+bool Game::checkCheckmate(bool isWhiteTurn)
 {
 
-    if (!isKinginCheck(white_turn))
+    if (!isKinginCheck(isWhiteTurn))
     {
         return false;
     }
 
-    std::vector<Move> moves_cpy = moves;
+    std::vector<Move> moves_cpy;
+    getMoves(moves_cpy, isWhiteTurn);
     bool legal_move = false;
 
     for (auto& m : moves_cpy)
     {
-        std::array<uint64_t, 12> board_copy = makeMove(m);
+        GameState game_copy = makeMove(m);
 
-        if (!isKinginCheck(white_turn))
+        if (!isKinginCheck(isWhiteTurn))
         {
             legal_move = true;
-            unmakeMove(board_copy);
+            unmakeMove(game_copy);
             break;
 
         }
-        unmakeMove(board_copy);
+        unmakeMove(game_copy);
     }
 
     if (legal_move)
