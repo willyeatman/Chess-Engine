@@ -173,11 +173,34 @@ bool Game::isKinginCheck(bool isWhite)
     return false;
 }
 
-GameState Game::makeMove(Move m)
+[[nodiscard]] GameState Game::makeMove(Move m)
 {
     GameState game_copy = game;
     uint64_t to_bit = 1Ull << m.to;
     uint64_t from_bit = 1Ull << m.from;
+
+    // Check this
+    if (m.type == PAWN_DBL_PUSH)
+    {
+        game.enPassasntSquare = m.to;
+    }
+    else
+    {
+        game.enPassasntSquare = -1;
+    }
+
+    if (m.type == EN_PASSANT)
+    {
+        if (white_turn)
+        {
+            game.board[BLACK_PAWNS] &= ~(1ULL<<(m.to+8));
+        }
+        else
+        {
+            game.board[WHITE_PAWNS] &= ~(1ULL<<(m.to-8));
+        }
+    }
+
     for (auto& x : game.board)
     {
         if (x & from_bit)
@@ -295,6 +318,53 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t empty = ~getAllPieces();
 
+    // Should refactor later cos this func takes "bool isWhite"
+    // Cunts fucked
+    if (game.enPassasntSquare != -1)
+    {   
+        int sq = game.enPassasntSquare;
+        int y = sq % 8;
+        int x = sq / 8;
+
+        int dx[] = {-1,1};
+
+        if (sq > 31)
+        {   
+            // En Passant White 
+            for (auto d : dx)
+            {   
+                int new_x = x + d;
+
+                if ((new_x >= 0) & (new_x < 8))
+                {   
+                    int index = (8*y) + new_x;
+                    if (game.board[WHITE_PAWNS] && (1ULL << index))
+                    {
+                        m.push_back(Move{index, sq+8, EN_PASSANT});     
+                    }
+                }
+            }
+        }
+        else
+        {
+            // En Passant Black 
+            for (auto d : dx)
+            {   
+                int new_x = x + d;
+
+                if ((new_x >= 0) & (new_x < 8))
+                {
+                    int index = (8*y) + new_x;
+                    if (game.board[BLACK_PAWNS] && (1ULL << index))
+                    {
+                        m.push_back(Move{index, sq-8, EN_PASSANT});     
+                    }
+                }
+            }
+        }
+    }
+
+
     if (isWhite)
     {   
         uint64_t pawn_pushes = (pawns << 8) & empty;
@@ -309,7 +379,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (dpp)
         {
             int to = __builtin_ctzll(dpp);
-            m.push_back(Move{to-16, to, 0});
+            m.push_back(Move{to-16, to, PAWN_DBL_PUSH});
             dpp &= dpp - 1;  
         }
     }
@@ -327,7 +397,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (dpp)
         {
             int to = __builtin_ctzll(dpp);
-            m.push_back(Move{to+16, to, 0});
+            m.push_back(Move{to+16, to, PAWN_DBL_PUSH});
             dpp &= dpp - 1;  
         }
     }

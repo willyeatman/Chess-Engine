@@ -20,6 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
+#warning Castling is unimplimented
+#warning En Passant is fucked
+
 enum Pieces
 {
     //  White pieces
@@ -134,6 +137,7 @@ typedef enum
 {
     DEFAULT,
     CAPTURE,
+    PAWN_DBL_PUSH,
     EN_PASSANT
 } MoveType;
 
@@ -185,7 +189,7 @@ class Game
         uint64_t knightAttacks[64];
         uint64_t pawnAttacks[2][64]; // zero for black, one for white
         uint64_t kingAttacks[64];
-        GameState makeMove(Move m);
+        [[nodiscard]] GameState makeMove(Move m);
         void unmakeMove(GameState g);
         bool isKinginCheck(bool isWhite);
         int turnNum;

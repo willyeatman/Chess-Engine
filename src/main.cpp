@@ -11,10 +11,10 @@ int main() {
     signal(SIGINT, signalHandler); 
     Log("Okay\n");
 
-    Game game;
+    Game Chess;
 
     startScreen();
-    game.runGame();
+    Chess.runGame();
     endScreen();
 
     return 0;

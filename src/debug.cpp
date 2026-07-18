@@ -9,7 +9,7 @@ std::ofstream moveLog("docs/moves.txt", std::ios::trunc);
     {
         int count = 0;
         
-        Log2("Move\n");
+        Log2("Move:");
         for (auto& m : moves)
         {
             Log2("\t");
@@ -19,6 +19,8 @@ std::ofstream moveLog("docs/moves.txt", std::ios::trunc);
             Log2(squareNames[m.from]);
             Log2(" -> ");
             Log2(squareNames[m.to]);
+            Log2(" Type = ");
+            Log2(m.type);
             Log2('\n');
         }
     }
