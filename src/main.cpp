@@ -4,12 +4,12 @@
 #include "screen.h"
 #include "debug.h"
 
-int main() {
-    // This will now successfully register because screen.h is included above it
 
-    Log("Starting Signal Handler ... ");
+int main() {
+
+    Log("Starting Signal Handler ... ", debugLog);
     signal(SIGINT, signalHandler); 
-    Log("Okay\n");
+    Log("Okay\n", debugLog);
 
     Game Chess;
 

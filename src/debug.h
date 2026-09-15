@@ -4,26 +4,19 @@
 
 extern std::ofstream debugLog;
 extern std::ofstream moveLog;
+extern std::ofstream passantLog;
+extern std::ofstream castlingLog;
 
 #ifdef DEBUG
     template <typename T>
-    void Log(const T& msg) 
+    void Log(const T& msg, std::ostream& stream) 
     {
-        debugLog << msg;
-        debugLog.flush();
-    }
-    template <typename T>
-    void Log2(const T& msg)
-    {
-        // this function is making me angry :((((
-        moveLog << msg;
-        moveLog.flush();
+        stream << msg;
+        stream.flush();
     }
     void printMoves(std::vector<Move> &moves);
 #else
     template <typename T>
-    inline void Log(const T&) {}
-    template <typename T>
-    inline void Log2(const T&);
+    inline void Log(const T&, std::ostream&) {}
     inline void printMoves(std::vector<Move>&) {}
 #endif

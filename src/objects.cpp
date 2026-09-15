@@ -1,5 +1,6 @@
 #include "objects.h"
 #include "debug.h"
+#include <cstdint>
 
 Game::Game()
 {
@@ -16,13 +17,14 @@ Game::Game()
 
     game.board[BLACK_PAWNS] = 0x00FF000000000000;
     game.board[BLACK_BISHOPS] = 0x2400000000000000;
-    game.board[BLACK_ROOKS] = 0x8100000000000000; 
+    game.board[BLACK_ROOKS] = 0x8100000000000000;
     game.board[BLACK_KNIGHTS] = 0x4200000000000000;
     game.board[BLACK_QUEEN] = 0x0800000000000000;
-    game.board[BLACK_KING] = 0x1000000000000000; 
+    game.board[BLACK_KING] = 0x1000000000000000;
 
     game.white_castling_rights = {true, true, true};
     game.black_castling_rights = {true, true, true};
+    game.enPassantSquare = -1;
 
     /*
     //! For testing stalemates
@@ -40,22 +42,43 @@ Game::~Game(){};
 
 void Game::runGame()
 {
-    Log("Initialising game\n");
-    Log("Initialisng Lookups ... ");
+    Log("Initialising game\n", debugLog);
+    Log("Initialisng Lookups ... ", debugLog);
 
     setupLookups();
 
-    Log("Okay\n");
+    Log("Okay\n", debugLog);
 
     MoveState state;
 
     while (!game_over)
     {
-        Log("Turn: ");
-        Log(turnNum);
-        Log(" (");
-        Log((white_turn ? "white" : "black"));
-        Log(") \n");
+        Log("Turn: ", debugLog);
+        Log(turnNum, debugLog);
+        Log(" (", debugLog);
+        Log((white_turn ? "white" : "black"), debugLog);
+        Log(") \n", debugLog);
+
+        Log("Turn: ", passantLog);
+        Log(turnNum, passantLog);
+        Log(" (", passantLog);
+        Log((white_turn ? "white" : "black"), passantLog);
+        Log(") \n", passantLog);
+        Log(" En Passant Square = ", passantLog);
+        Log(game.enPassantSquare, passantLog);
+        Log("\n", passantLog);
+
+        /*
+            Need to update logic so castling works
+        */
+        Log("Turn: ", castlingLog);
+        Log(turnNum, castlingLog);
+        Log(" (", castlingLog);
+        Log((white_turn ? "white" : "black"), castlingLog);
+        Log(") \n", castlingLog);
+        Log(" Castling rights = ", castlingLog);
+        Log(getCastlingRights(white_turn ? true : false), castlingLog);
+        Log("\n", castlingLog);
 
         clearScreen();
         printGame();
@@ -69,9 +92,9 @@ void Game::runGame()
 
         while (!inputValid)
         {
-            Log("Waiting for input ... ");
+            Log("Waiting for input ... ", debugLog);
             std::cin >> p >> d;
-            
+
 
             for (int i = 0; i < 2; i++)
             {
@@ -83,16 +106,16 @@ void Game::runGame()
                 piece = square_map.at(p);
                 destination = square_map.at(d);
                 inputValid = true;
-                Log("Valid Input\n");
+                Log("Valid Input\n", debugLog);
             }
             catch(const std::exception& e)
             {
                 std::cerr << "Invalid Input" << '\n';
-                Log(" Invalid Input\n");
+                Log(" Invalid Input\n", debugLog);
             }
         }
-        Log("Calling updateGame():\n");
-        state = updateGame(piece, destination); 
+        Log("Calling updateGame():\n", debugLog);
+        state = updateGame(piece, destination);
         if (state == CHECKMATE | state == STALEMATE)
         {
             game_over = true;
@@ -100,7 +123,7 @@ void Game::runGame()
     }
     clearScreen();
     std::cout << "Game over - " << ((state == CHECKMATE)? "Checkmate" : "Stalemate") << std::endl;
-    Log((state == CHECKMATE)? "Checkmate" : "Stalemate");
+    Log((state == CHECKMATE)? "Checkmate" : "Stalemate", debugLog);
     std::cin.get();
 }
 
@@ -110,30 +133,30 @@ bool operator == (Move m1, Move m2)
     {
         return true;
     }
-    else 
+    else
     {
         return false;
     }
 }
 
-MoveState Game::updateGame(const int p, const int d)
+[[nodiscard]] MoveState Game::updateGame(const int p, const int d)
 {
     Move move = {p,d, 0};
     std::vector<Move> legalMoves;
-    Log("\tCalling getMoves()\n");
+    Log("\tCalling getMoves()\n", debugLog);
     getMoves(legalMoves, white_turn);
 
-    Log("\tTesting moves against possible moves\n");
+    Log("\tTesting moves against possible moves\n", debugLog);
     for (auto& m : legalMoves)
     {
-        if (m == move) 
-        {   
-            Log("\tTrying move\n");
+        if (m == move)
+        {
+            Log("\tTrying move\n", debugLog);
             GameState game_copy = makeMove(m);
             if (isKinginCheck(white_turn))
             {
                 std::cerr << "King in Check" << std::endl;
-                Log("\t\tKing in Check\n");
+                Log("\t\tKing in Check\n", debugLog);
                 unmakeMove(game_copy);
                 break;
             }
@@ -144,11 +167,11 @@ MoveState Game::updateGame(const int p, const int d)
                 {
                     turnNum++;
                 }
-                Log("\t\tValid Move\n");
+                Log("\t\tValid Move\n", debugLog);
                 /*
                 Okay so this is checking the loss conditions for
                 the side has had a move made against it
-                */ 
+                */
                 return checkGameEnd(white_turn);
             }
         }
@@ -179,16 +202,17 @@ bool Game::isKinginCheck(bool isWhite)
     uint64_t to_bit = 1Ull << m.to;
     uint64_t from_bit = 1Ull << m.from;
 
-    // Check this
+    // THis works
     if (m.type == PAWN_DBL_PUSH)
     {
-        game.enPassasntSquare = m.to;
+        game.enPassantSquare = m.to;
     }
     else
     {
-        game.enPassasntSquare = -1;
+        game.enPassantSquare = -1;
     }
 
+    // This removes the pawn that got en passanted
     if (m.type == EN_PASSANT)
     {
         if (white_turn)
@@ -205,14 +229,15 @@ bool Game::isKinginCheck(bool isWhite)
     {
         if (x & from_bit)
         {
-            x &= ~from_bit;
-            x |= to_bit;
+            x &= ~from_bit; // Unplaces piece
+            x |= to_bit; // Places piece
             for (auto& y : game.board)
             {
                 if (&y != &x)
                 {
-                    y &= ~to_bit;
-                } 
+                    y &= ~to_bit; // Unplaces rival piece
+                    // Maybe where en passant stuff dies
+                }
             }
             break;
         }
@@ -240,7 +265,7 @@ void Game::printGame()
                 printPiece(index);
             }
             std::cout << "\n";
-        } 
+        }
         std::cout << "    a  b  c  d  e  f  g  h\n";
     }
     else
@@ -256,7 +281,7 @@ void Game::printGame()
                 printPiece(index);
             }
             std::cout << "\n";
-        } 
+        }
         std::cout << "    h  g  f  e  d  c  b  a\n";
     }
 }
@@ -274,7 +299,7 @@ int Game::getPiece(int index) const
     {
         if ((binary_location & game.board[piece]) != 0) return piece;
     }
-    
+
     std::cerr << " This shouldnt Happen, You have problem if this prints" << std::endl;
     return -1;
 }
@@ -300,7 +325,7 @@ void Game::printPiece(int index) const
 {
     int piece = getPiece(index);
 
-    if (piece == -1) 
+    if (piece == -1)
     {
         std::cout << "   ";
         std::cout << RESET;
@@ -315,58 +340,41 @@ void Game::printPiece(int index) const
 void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
 {
     uint64_t pawns = isWhite ? game.board[WHITE_PAWNS] : game.board[BLACK_PAWNS];
+    uint64_t enemyPawns = isWhite ? game.board[BLACK_PAWNS] : game.board[WHITE_PAWNS];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t empty = ~getAllPieces();
 
+    int row_shift = isWhite ? 8 : -8;
+
     // Should refactor later cos this func takes "bool isWhite"
-    // Cunts fucked
-    if (game.enPassasntSquare != -1)
-    {   
-        int sq = game.enPassasntSquare;
-        int y = sq % 8;
-        int x = sq / 8;
+    if (game.enPassantSquare != -1)
+    {
+        int sq = game.enPassantSquare; // Square which can be attacked via En Passant
+        int y = sq / 8; // Row of the square that the pawn double pushed to
+        int x = sq % 8; // Column of the square that the pawn double pushed to
 
         int dx[] = {-1,1};
 
-        if (sq > 31)
-        {   
-            // En Passant White 
-            for (auto d : dx)
-            {   
-                int new_x = x + d;
-
-                if ((new_x >= 0) & (new_x < 8))
-                {   
-                    int index = (8*y) + new_x;
-                    if (game.board[WHITE_PAWNS] && (1ULL << index))
-                    {
-                        m.push_back(Move{index, sq+8, EN_PASSANT});     
-                    }
-                }
-            }
-        }
-        else
+        if (sq > -1)
         {
-            // En Passant Black 
-            for (auto d : dx)
-            {   
+            for (auto d : dx) // for each dx
+            {
                 int new_x = x + d;
 
-                if ((new_x >= 0) & (new_x < 8))
+                if ((new_x >= 0) & (new_x < 8)) // check if x+dx is bounded
                 {
-                    int index = (8*y) + new_x;
-                    if (game.board[BLACK_PAWNS] && (1ULL << index))
+                    int index = (8*y) + new_x; // calculate index of square
+                    if (pawns & (1ULL << index)) // If enemy pawn is present at index
                     {
-                        m.push_back(Move{index, sq-8, EN_PASSANT});     
+                        m.push_back(Move{index, sq+row_shift, EN_PASSANT});
                     }
                 }
             }
         }
     }
 
-
     if (isWhite)
-    {   
+    {
         uint64_t pawn_pushes = (pawns << 8) & empty;
         uint64_t pp = pawn_pushes;
         uint64_t dpp = ((pawn_pushes & RANK_3) << 8) & empty;
@@ -374,13 +382,13 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         {
             int to = __builtin_ctzll(pp);
             m.push_back(Move{to-8, to, 0});
-            pp &= pp - 1;  
+            pp &= pp - 1;
         }
         while (dpp)
         {
             int to = __builtin_ctzll(dpp);
             m.push_back(Move{to-16, to, PAWN_DBL_PUSH});
-            dpp &= dpp - 1;  
+            dpp &= dpp - 1;
         }
     }
     else
@@ -392,13 +400,13 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         {
             int to = __builtin_ctzll(pp);
             m.push_back(Move{to+8, to, 0});
-            pp &= pp - 1;  
+            pp &= pp - 1;
         }
         while (dpp)
         {
             int to = __builtin_ctzll(dpp);
             m.push_back(Move{to+16, to, PAWN_DBL_PUSH});
-            dpp &= dpp - 1;  
+            dpp &= dpp - 1;
         }
     }
 
@@ -406,14 +414,14 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
     {
         int from = __builtin_ctzll(pawns);
         uint64_t attacks = pawnAttacks[isWhite][from] & enemyPieces;
-        
+
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
             m.push_back(Move{from, to, 0});
             attacks &= attacks - 1;                // clear that destination bit
         }
-        pawns &= pawns - 1; 
+        pawns &= pawns - 1;
     }
 }
 
@@ -426,14 +434,14 @@ void Game::getKingMoves(std::vector<Move>& m, bool isWhite)
     {
         int from = __builtin_ctzll(king);
         uint64_t attacks = kingAttacks[from] & ~ownPieces;
-        
+
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
             m.push_back(Move{from, to, 0});
             attacks &= attacks - 1;                // clear that destination bit
         }
-        king &= king - 1; 
+        king &= king - 1;
     }
 }
 
@@ -446,14 +454,14 @@ void Game::getKnightMoves(std::vector<Move>& m, bool isWhite)
     {
         int from = __builtin_ctzll(knights);
         uint64_t attacks = knightAttacks[from] & ~ownPieces;
-        
+
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
             m.push_back(Move{from, to, 0});
             attacks &= attacks - 1;                // clear that destination bit
         }
-        knights &= knights - 1; 
+        knights &= knights - 1;
     }
 }
 
@@ -504,10 +512,10 @@ void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
                 int index = (8*ny) + nx;
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
-                {   
+                {
                     m.push_back(Move{from, index, 0});
                     break;
-                } 
+                }
                 else if (location & ownPieces)
                 {
                     break;
@@ -520,7 +528,7 @@ void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
                 ny += dy;
             }
         }
-        rooks &= rooks - 1; 
+        rooks &= rooks - 1;
     }
 }
 
@@ -571,10 +579,10 @@ void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
                 int index = (8*ny) + nx;
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
-                {   
+                {
                     m.push_back(Move{from, index, 0});
                     break;
-                } 
+                }
                 else if (location & ownPieces)
                 {
                     break;
@@ -587,7 +595,7 @@ void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
                 ny += dy;
             }
         }
-        bishops &= bishops - 1; 
+        bishops &= bishops - 1;
     }
 }
 
@@ -640,10 +648,10 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 int index = (8*ny) + nx;
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
-                {   
+                {
                     m.push_back(Move{from, index, 0});
                     break;
-                } 
+                }
                 else if (location & ownPieces)
                 {
                     break;
@@ -656,7 +664,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 ny += dy;
             }
         }
-        queen_copy &= queen_copy - 1; 
+        queen_copy &= queen_copy - 1;
     }
 
     queen_copy = queen;
@@ -699,10 +707,10 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 int index = (8*ny) + nx;
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
-                {   
+                {
                     m.push_back(Move{from, index, 0});
                     break;
-                } 
+                }
                 else if (location & ownPieces)
                 {
                     break;
@@ -715,7 +723,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 ny += dy;
             }
         }
-        queen_copy &= queen_copy - 1; 
+        queen_copy &= queen_copy - 1;
     }
 }
 
@@ -775,10 +783,10 @@ void Game::setupKingLookup()
 void Game::setupPawnLookups()
 {
     const int dx_b[] = {1, -1};
-    const int dy_b[] = {-1, -1}; 
+    const int dy_b[] = {-1, -1};
 
     const int dx_w[] = {1, -1};
-    const int dy_w[] = {1, 1}; 
+    const int dy_w[] = {1, 1};
 
     for (int sq = 0; sq < 64; sq++)
     {
@@ -859,10 +867,10 @@ MoveState Game::checkGameEnd(bool isWhiteTurn)
     return VALID_MOVE;
 }
 
-// All stuff under here isnt finished 
+// All stuff under here isnt finished
 
 /**
- * @param bitboard 
+ * @param bitboard
  * @return returns board stalemate status
  */
 bool Game::checkStalemate(bool isWhiteTurn)
@@ -899,7 +907,7 @@ bool Game::checkStalemate(bool isWhiteTurn)
 }
 
 /**
- * @param bitboard 
+ * @param bitboard
  * @return returns board checkmate status
  */
 bool Game::checkCheckmate(bool isWhiteTurn)
@@ -936,3 +944,27 @@ bool Game::checkCheckmate(bool isWhiteTurn)
     return true;
 }
 
+MoveState Game::getCastlingRights(bool isWhite)
+{
+    CastlingRights rights = isWhite ? game.white_castling_rights : game.black_castling_rights;
+
+    if (!rights.KingFirstMove)
+    {
+        return NO_CASTLE;
+    }
+    else if (rights.LongRookFirstMove && rights.ShortRookFirstMove)
+    {
+        return LS_CASTLE;
+    }
+    else if (rights.LongRookFirstMove && !rights.ShortRookFirstMove)
+    {
+        return LONG_CASTLE;
+    }
+    else if (!rights.LongRookFirstMove && rights.ShortRookFirstMove)
+    {
+        return SHORT_CASTLE;
+    }
+
+    return NO_CASTLE; // If both rooks have moved
+
+}

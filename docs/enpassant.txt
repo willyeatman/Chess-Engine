@@ -1,0 +1,24 @@
+Turn: 1 (white) 
+ En Passant Square = -1
+Turn: 1 (black) 
+ En Passant Square = 24
+Turn: 2 (white) 
+ En Passant Square = 39
+Turn: 2 (black) 
+ En Passant Square = -1
+Turn: 3 (white) 
+ En Passant Square = 33
+Turn: 3 (black) 
+ En Passant Square = -1
+Turn: 4 (white) 
+ En Passant Square = 36
+Turn: 4 (white) 
+ En Passant Square = 36
+Turn: 4 (black) 
+ En Passant Square = 27
+Turn: 5 (white) 
+ En Passant Square = -1
+Turn: 5 (black) 
+ En Passant Square = 29
+Turn: 6 (white) 
+ En Passant Square = -1

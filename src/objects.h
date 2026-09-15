@@ -1,12 +1,12 @@
 /**
  * @file objects.h
  * @author William Yeatman (will.yeatman24@gmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2026-06-19
- * 
+ *
  * @copyright Copyright (c) 2026
- * 
+ *
  */
 
 #pragma once
@@ -20,8 +20,6 @@
 #include <unordered_map>
 #include <vector>
 
-#warning Castling is unimplimented
-#warning En Passant is fucked
 
 enum Pieces
 {
@@ -44,7 +42,11 @@ enum MoveState
     STALEMATE,
     INVALID_MOVE,
     VALID_MOVE,
-    ERROR
+    ERROR,
+    LS_CASTLE,
+    LONG_CASTLE,
+    SHORT_CASTLE,
+    NO_CASTLE
 };
 
 enum Squares
@@ -59,7 +61,7 @@ enum Squares
     A8, B8, C8, D8, E8, F8, G8, H8
 };
 
-constexpr const char* squareNames[] = 
+constexpr const char* squareNames[] =
 {
     "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
     "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
@@ -95,7 +97,7 @@ const std::unordered_map<std::string, Squares> square_map =
     {"A8", A8}, {"B8", B8}, {"C8", C8}, {"D8", D8}, {"E8", E8}, {"F8", F8}, {"G8", G8}, {"H8", H8},
 };
 
-constexpr const char* piece_chars[12] = 
+constexpr const char* piece_chars[12] =
 {
     "K","Q","R","B","N","P",   // white king queen rook bishop knight pawn
     "k","q","r","b","n","p"    // black king queen rook bishop knight pawn
@@ -117,7 +119,7 @@ constexpr uint64_t RANK_6 = 0x0000FF0000000000ULL;   // squares 40–47
 constexpr uint64_t RANK_7 = 0x00FF000000000000ULL;   // squares 48–55
 constexpr uint64_t RANK_8 = 0xFF00000000000000ULL;   // squares 56–63
 
-constexpr uint64_t FILE_A = 0x0101010101010101ULL; 
+constexpr uint64_t FILE_A = 0x0101010101010101ULL;
 constexpr uint64_t FILE_B = 0x0202020202020202ULL;
 constexpr uint64_t FILE_C = 0x0404040404040404ULL;
 constexpr uint64_t FILE_D = 0x0808080808080808ULL;
@@ -133,19 +135,21 @@ struct Move
     int type;
 };
 
-typedef enum 
+typedef enum
 {
     DEFAULT,
     CAPTURE,
     PAWN_DBL_PUSH,
     EN_PASSANT
+
 } MoveType;
 
 struct CastlingRights
 {
-    bool longRookFirstMove;
+    bool LongRookFirstMove;
     bool ShortRookFirstMove;
     bool KingFirstMove;
+
 };
 
 struct GameState
@@ -153,7 +157,7 @@ struct GameState
     std::array<uint64_t, 12> board;
     CastlingRights white_castling_rights;
     CastlingRights black_castling_rights;
-    int enPassasntSquare;
+    int enPassantSquare;
 };
 
 class Game
@@ -161,7 +165,7 @@ class Game
     public:
         Game();
         ~Game();
-        MoveState updateGame(const int p, const int d);
+        [[nodiscard]] MoveState updateGame(const int p, const int d);
         void printGame();
         void runGame();
     private:
@@ -196,4 +200,6 @@ class Game
         MoveState checkGameEnd(bool isWhiteTurn);
         bool checkStalemate(bool isWhiteTurn);
         bool checkCheckmate(bool isWhiteTurn);
+        MoveState getCastlingRights(bool isWhite);
+
 };
