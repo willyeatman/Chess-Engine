@@ -5,3 +5,5 @@ outputs/game_debug
 docs/log.txt
 docs/notes
 docs/moves.txt
+doc/castling.txt
+docs/enpassant.txt

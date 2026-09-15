@@ -8,6 +8,8 @@ Game::Game()
     game_over = false;
     turnNum = 1;
 
+    setupLookups();
+
     game.board[WHITE_PAWNS] = 0x000000000000FF00;
     game.board[WHITE_BISHOPS] = 0x0000000000000024;
     game.board[WHITE_ROOKS] = 0x0000000000000081;
@@ -26,29 +28,16 @@ Game::Game()
     game.black_castling_rights = {true, true, true};
     game.enPassantSquare = -1;
 
-    /*
-    //! For testing stalemates
-    for (auto& bb : board) bb = 0;
+    startScreen();
+    runGame();
+    endScreen();
 
-    board[BLACK_KING]  = 1ULL << 56;   // a8
-    board[WHITE_QUEEN] = 1ULL << 41-8;   // b6
-    board[WHITE_KING]  = 1ULL << 42;   // c6
-
-    white_turn = true;
-    */
 }
 
 Game::~Game(){};
 
 void Game::runGame()
 {
-    Log("Initialising game\n", debugLog);
-    Log("Initialisng Lookups ... ", debugLog);
-
-    setupLookups();
-
-    Log("Okay\n", debugLog);
-
     MoveState state;
 
     while (!game_over)
@@ -71,6 +60,7 @@ void Game::runGame()
         /*
             Need to update logic so castling works
         */
+
         Log("Turn: ", castlingLog);
         Log(turnNum, castlingLog);
         Log(" (", castlingLog);
@@ -141,7 +131,7 @@ bool operator == (Move m1, Move m2)
 
 [[nodiscard]] MoveState Game::updateGame(const int p, const int d)
 {
-    Move move = {p,d, 0};
+    Move move = {p,d, DEFAULT};
     std::vector<Move> legalMoves;
     Log("\tCalling getMoves()\n", debugLog);
     getMoves(legalMoves, white_turn);
@@ -340,7 +330,6 @@ void Game::printPiece(int index) const
 void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
 {
     uint64_t pawns = isWhite ? game.board[WHITE_PAWNS] : game.board[BLACK_PAWNS];
-    uint64_t enemyPawns = isWhite ? game.board[BLACK_PAWNS] : game.board[WHITE_PAWNS];
     uint64_t enemyPieces = isWhite ? getBlackPieces() : getWhitePieces();
     uint64_t empty = ~getAllPieces();
 
@@ -381,7 +370,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (pp)
         {
             int to = __builtin_ctzll(pp);
-            m.push_back(Move{to-8, to, 0});
+            m.push_back(Move{to-8, to, DEFAULT});
             pp &= pp - 1;
         }
         while (dpp)
@@ -399,7 +388,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (pp)
         {
             int to = __builtin_ctzll(pp);
-            m.push_back(Move{to+8, to, 0});
+            m.push_back(Move{to+8, to, DEFAULT});
             pp &= pp - 1;
         }
         while (dpp)
@@ -418,7 +407,7 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
-            m.push_back(Move{from, to, 0});
+            m.push_back(Move{from, to, DEFAULT});
             attacks &= attacks - 1;                // clear that destination bit
         }
         pawns &= pawns - 1;
@@ -438,7 +427,7 @@ void Game::getKingMoves(std::vector<Move>& m, bool isWhite)
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
-            m.push_back(Move{from, to, 0});
+            m.push_back(Move{from, to, DEFAULT});
             attacks &= attacks - 1;                // clear that destination bit
         }
         king &= king - 1;
@@ -458,7 +447,7 @@ void Game::getKnightMoves(std::vector<Move>& m, bool isWhite)
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
-            m.push_back(Move{from, to, 0});
+            m.push_back(Move{from, to, DEFAULT});
             attacks &= attacks - 1;                // clear that destination bit
         }
         knights &= knights - 1;
@@ -513,7 +502,7 @@ void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                     break;
                 }
                 else if (location & ownPieces)
@@ -522,7 +511,7 @@ void Game::getRookMoves(std::vector<Move>& m, bool isWhite)
                 }
                 else
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                 }
                 nx += dx;
                 ny += dy;
@@ -580,7 +569,7 @@ void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                     break;
                 }
                 else if (location & ownPieces)
@@ -589,7 +578,7 @@ void Game::getBishopMoves(std::vector<Move>& m, bool isWhite)
                 }
                 else
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                 }
                 nx += dx;
                 ny += dy;
@@ -649,7 +638,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                     break;
                 }
                 else if (location & ownPieces)
@@ -658,7 +647,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 }
                 else
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                 }
                 nx += dx;
                 ny += dy;
@@ -708,7 +697,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 uint64_t location = 1ULL << index;
                 if (location & enemyPieces)
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                     break;
                 }
                 else if (location & ownPieces)
@@ -717,7 +706,7 @@ void Game::getQueenMoves(std::vector<Move>& m, bool isWhite)
                 }
                 else
                 {
-                    m.push_back(Move{from, index, 0});
+                    m.push_back(Move{from, index, DEFAULT});
                 }
                 nx += dx;
                 ny += dy;
@@ -846,6 +835,7 @@ void Game::getMoves(std::vector<Move>& m, bool isWhite) // Must Be called after 
     getRookMoves(m, isWhite);
     getBishopMoves(m, isWhite);
     getKnightMoves(m, isWhite);
+    getCastlingMoves(m, isWhite);
 }
 void Game::getAllMoves(std::vector<Move>& m)
 {
@@ -944,7 +934,7 @@ bool Game::checkCheckmate(bool isWhiteTurn)
     return true;
 }
 
-MoveState Game::getCastlingRights(bool isWhite)
+MoveType Game::getCastlingRights(bool isWhite)
 {
     CastlingRights rights = isWhite ? game.white_castling_rights : game.black_castling_rights;
 
@@ -954,17 +944,83 @@ MoveState Game::getCastlingRights(bool isWhite)
     }
     else if (rights.LongRookFirstMove && rights.ShortRookFirstMove)
     {
-        return LS_CASTLE;
+        return B_CASTLE;
     }
     else if (rights.LongRookFirstMove && !rights.ShortRookFirstMove)
     {
-        return LONG_CASTLE;
+        return Q_CASTLE;
     }
     else if (!rights.LongRookFirstMove && rights.ShortRookFirstMove)
     {
-        return SHORT_CASTLE;
+        return K_CASTLE;
     }
 
     return NO_CASTLE; // If both rooks have moved
+}
 
+
+void Game::getCastlingMoves(std::vector<Move>& m, bool isWhite) // I dont like this function, it seems like it is bloated
+{
+    uint64_t homeRank = isWhite ? RANK_1 : RANK_8;
+    MoveType rights = getCastlingRights(isWhite);
+    uint64_t queenCastleBetween = isWhite ? CASTLE_WQ_BETWEEN : CASTLE_BQ_BETWEEN;
+    uint64_t kingCastleBetween = isWhite ? CASTLE_WK_BETWEEN : CASTLE_BK_BETWEEN;
+
+
+
+    if (!isKinginCheck(isWhite))
+    {
+        return;
+    }
+
+    switch (rights)
+    {
+        // Need to check is a square it attacked
+        case B_CASTLE:
+            if (!(queenCastleBetween && getAllPieces()))// Checking path is clear
+            {
+                if (!(queenCastleBetween && getTargetedSqaures(m))) // Check that none of the squares it passes through are attacked
+                {
+                    m.push_back(Move(Q_CASTLE)); // Need to change this, this wont work with my current move selection
+                }
+            }
+            if (!(kingCastleBetween & getAllPieces()))
+            {
+                if (!(kingCastleBetween && getTargetedSqaures(m)))
+                {
+                    m.push_back(Move(K_CASTLE));
+                }
+            }
+            return;
+        case K_CASTLE:
+            if (!(kingCastleBetween & getAllPieces()))
+            {
+                if (!(kingCastleBetween && getTargetedSqaures(m)))
+                {
+                    m.push_back(Move(K_CASTLE));
+                }
+            }
+            return;
+        case Q_CASTLE:
+            if (!(queenCastleBetween && getAllPieces()))
+            {
+                if (!(queenCastleBetween && getTargetedSqaures(m)))
+                {
+                    m.push_back(Move(Q_CASTLE));
+                }
+            }
+            return;
+        default: return;
+    }
+}
+
+uint64_t Game::getTargetedSqaures(std::vector<Move>& m) //
+{
+    // go thru all moves, |= with uint64_t, then this gives a bitbaord of targed squares
+    uint64_t targetedSquares = 0ULL;
+    for (auto& move : m)
+    {
+        targetedSquares |= 1ULL << move.to;
+    }
+    return targetedSquares;
 }

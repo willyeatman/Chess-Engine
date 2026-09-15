@@ -42,11 +42,7 @@ enum MoveState
     STALEMATE,
     INVALID_MOVE,
     VALID_MOVE,
-    ERROR,
-    LS_CASTLE,
-    LONG_CASTLE,
-    SHORT_CASTLE,
-    NO_CASTLE
+    ERROR
 };
 
 enum Squares
@@ -128,21 +124,35 @@ constexpr uint64_t FILE_F = 0x2020202020202020ULL;
 constexpr uint64_t FILE_G = 0x4040404040404040ULL;
 constexpr uint64_t FILE_H = 0x8080808080808080ULL;
 
-struct Move
-{
-    int from;
-    int to;
-    int type;
-};
+// Represents the squares between the King and the Rook
+constexpr uint64_t CASTLE_WK_BETWEEN = 0x0000000000000060ULL; // f1, g1
+constexpr uint64_t CASTLE_WQ_BETWEEN = 0x000000000000000EULL; // b1, c1, d1
+constexpr uint64_t CASTLE_BK_BETWEEN = 0x6000000000000000ULL; // f8, g8
+constexpr uint64_t CASTLE_BQ_BETWEEN = 0x0E00000000000000ULL; // b8, c8, d8
 
 typedef enum
 {
     DEFAULT,
     CAPTURE,
     PAWN_DBL_PUSH,
-    EN_PASSANT
+    EN_PASSANT,
+    Q_CASTLE,
+    K_CASTLE,
+    B_CASTLE, // Not really a move type but makes stuff easy for me
+    NO_CASTLE
 
 } MoveType;
+
+struct Move
+{
+    int from;
+    int to;
+    int type;
+
+    Move(MoveType type) : type(type) {}
+    Move(int from, int to, MoveType type)
+        : from(from), to(to), type(type) {}
+};
 
 struct CastlingRights
 {
@@ -200,6 +210,7 @@ class Game
         MoveState checkGameEnd(bool isWhiteTurn);
         bool checkStalemate(bool isWhiteTurn);
         bool checkCheckmate(bool isWhiteTurn);
-        MoveState getCastlingRights(bool isWhite);
-
+        MoveType getCastlingRights(bool isWhite);
+        void getCastlingMoves(std::vector<Move>& m, bool isWhite);
+        uint64_t getTargetedSqaures(std::vector<Move>& m);
 };

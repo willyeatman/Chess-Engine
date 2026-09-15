@@ -8,14 +8,10 @@
 int main() {
 
     Log("Starting Signal Handler ... ", debugLog);
-    signal(SIGINT, signalHandler); 
+    signal(SIGINT, signalHandler);
     Log("Okay\n", debugLog);
 
     Game Chess;
-
-    startScreen();
-    Chess.runGame();
-    endScreen();
 
     return 0;
 }
