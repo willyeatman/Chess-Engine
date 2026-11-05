@@ -1,6 +1,5 @@
 #include "objects.h"
 #include "debug.h"
-#include <cstdint>
 
 Game::Game()
 {
@@ -77,22 +76,35 @@ void Game::runGame()
         printMoves(moves);
         int piece = 0;
         int destination = 0;
+        std::string board_input;
         std::string p, d;
+        char promotion = 0;
         bool inputValid = false;
+        Move move;
 
         while (!inputValid)
         {
             Log("Waiting for input ... ", debugLog);
-            std::cin >> p >> d;
-
-
-            for (int i = 0; i < 2; i++)
+            std::cin >> board_input;
+            for (auto& c : board_input)
             {
-                p[i] = toupper(p[i]);
-                d[i] = toupper(d[i]);
+                c = tolower(c);
             }
+
+            std::string p =  board_input.substr(0,2); // substr(start index, length)
+            std::string d = board_input.substr(2,2);
+
+            if (board_input.length() == 5) // This works, but you can also type whatevr
+            {
+                promotion = board_input[board_input.length() - 1];
+            }
+
             try
             {
+                if ((board_input.length() != 5) && (board_input.length() != 4))
+                {
+                    throw std::runtime_error("Input not 4 or 5 chars!");
+                }
                 piece = square_map.at(p);
                 destination = square_map.at(d);
                 inputValid = true;
@@ -104,8 +116,18 @@ void Game::runGame()
                 Log(" Invalid Input\n", debugLog);
             }
         }
+
         Log("Calling updateGame():\n", debugLog);
-        state = updateGame(piece, destination);
+        if (promotion)
+        {
+            move = {piece,destination, PROMOTION, promotion};
+        }
+        else
+        {
+            move = {piece,destination, 0};  
+        }
+
+        state = updateGame(move);
         if (state == CHECKMATE | state == STALEMATE)
         {
             game_over = true;
@@ -129,9 +151,8 @@ bool operator == (Move m1, Move m2)
     }
 }
 
-[[nodiscard]] MoveState Game::updateGame(const int p, const int d)
+[[nodiscard]] MoveState Game::updateGame(const Move& move)
 {
-    Move move = {p,d, DEFAULT};
     std::vector<Move> legalMoves;
     Log("\tCalling getMoves()\n", debugLog);
     getMoves(legalMoves, white_turn);
@@ -370,7 +391,18 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (pp)
         {
             int to = __builtin_ctzll(pp);
-            m.push_back(Move{to-8, to, DEFAULT});
+            if (to > 55) // On last rank
+            {
+                m.push_back(Move{to-8, to, PROMOTION, QUEEN});
+                m.push_back(Move{to-8, to, PROMOTION, KNIGHT});
+                m.push_back(Move{to-8, to, PROMOTION, ROOK});
+                m.push_back(Move{to-8, to, PROMOTION, BISHOP});
+                m.push_back(Move{to-8, to, 0});
+            }
+            else
+            {
+                m.push_back(Move{to-8, to, 0});
+            }
             pp &= pp - 1;
         }
         while (dpp)
@@ -388,7 +420,18 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (pp)
         {
             int to = __builtin_ctzll(pp);
-            m.push_back(Move{to+8, to, DEFAULT});
+            if (to < 8) // On last rank
+            {
+                m.push_back(Move{to+8, to, PROMOTION, QUEEN});
+                m.push_back(Move{to+8, to, PROMOTION, KNIGHT});
+                m.push_back(Move{to+8, to, PROMOTION, ROOK});
+                m.push_back(Move{to+8, to, PROMOTION, BISHOP});
+                m.push_back(Move{to+8, to, 0});
+            }
+            else
+            {
+                m.push_back(Move{to-8, to, 0});
+            }
             pp &= pp - 1;
         }
         while (dpp)
@@ -407,11 +450,24 @@ void Game::getPawnMoves(std::vector<Move>& m, bool isWhite)
         while (attacks)
         {
             int to = __builtin_ctzll(attacks);
-            m.push_back(Move{from, to, DEFAULT});
+            m.push_back(Move{from, to, 0});
+            if (isWhite ? to < 55 : to < 8) // On last rank
+            {
+                m.push_back(Move{from, to, PROMOTION, QUEEN});
+                m.push_back(Move{from, to, PROMOTION, KNIGHT});
+                m.push_back(Move{from, to, PROMOTION, ROOK});
+                m.push_back(Move{from, to, PROMOTION, BISHOP});
+                m.push_back(Move{from, to, 0});
+            }
+            else
+            {
+                m.push_back(Move{from, to, 0});
+            }
             attacks &= attacks - 1;                // clear that destination bit
         }
         pawns &= pawns - 1;
-    }
+    } 
+
 }
 
 void Game::getKingMoves(std::vector<Move>& m, bool isWhite)
